@@ -1,19 +1,4 @@
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
-import { useAuth } from '@/features/auth/AuthContext';
-import { useRouter } from 'expo-router';
-import {
-  AlertCircle,
-  ArrowRight,
-  Check,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  ShieldCheck,
-} from 'lucide-react-native';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -24,33 +9,39 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Lock,
+  User,
+  ShieldCheck,
+} from 'lucide-react-native';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
+import { useAuth } from '@/features/auth/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const validateEmail = (val: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  };
-
   const handleLogin = async () => {
-    const cleanEmail = email.trim();
+    const cleanId = identifier.trim();
     const cleanPassword = password.trim();
 
-    if (!cleanEmail) {
-      setErrorMessage('Please enter your work email address.');
-      return;
-    }
-
-    if (!validateEmail(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+    if (!cleanId) {
+      setErrorMessage('Please enter your work email or Employee ID.');
       return;
     }
 
@@ -62,17 +53,24 @@ export default function LoginScreen() {
     setLoading(true);
     setErrorMessage(null);
 
-    const result = await signIn(cleanEmail, cleanPassword, rememberMe);
+    const result = await signIn(cleanId, cleanPassword, rememberMe);
     setLoading(false);
 
     if (!result.success) {
       let friendlyError = result.error || 'Authentication failed. Please check your credentials.';
       if (friendlyError.toLowerCase().includes('invalid login credentials')) {
-        friendlyError = 'Incorrect email or password. Please try again.';
+        friendlyError = 'Incorrect email/ID or password. Please try again.';
       } else if (friendlyError.toLowerCase().includes('network')) {
         friendlyError = 'Network error. Please check your internet connection.';
       }
       setErrorMessage(friendlyError);
+    } else {
+      // Role is automatically detected
+      if (result.role === 'sales_person') {
+        router.replace('/sales' as any);
+      } else if (result.role === 'delivery_person') {
+        router.replace('/delivery' as any);
+      }
     }
   };
 
@@ -100,12 +98,12 @@ export default function LoginScreen() {
 
             <View style={styles.verifiedBadge}>
               <ShieldCheck size={12} color={Colors.primaryDark} />
-              <Text style={styles.verifiedText}>DISTRO SALES</Text>
+              <Text style={styles.verifiedText}>DISTRIBO FMCG SUITE</Text>
             </View>
 
-            <Text style={styles.appTitle}>Sales Officer Login</Text>
+            <Text style={styles.appTitle}>Unified Portal Sign In</Text>
             <Text style={styles.appSubtitle}>
-              Sign in to manage your beat stores, visits and orders
+              Sign in with your work email or Employee ID. Your role portal opens automatically.
             </Text>
           </View>
 
@@ -120,17 +118,16 @@ export default function LoginScreen() {
           {/* Form Card */}
           <View style={styles.formCard}>
             <Input
-              label="Work Email Address"
-              placeholder="e.g. name@aarvifmcg.com"
-              keyboardType="email-address"
+              label="Work Email or Employee ID"
+              placeholder="e.g. name@aarvifmcg.com or EMP-001"
               autoCapitalize="none"
               autoCorrect={false}
-              value={email}
+              value={identifier}
               onChangeText={(text) => {
-                setEmail(text);
+                setIdentifier(text);
                 if (errorMessage) setErrorMessage(null);
               }}
-              leftIcon={<Mail size={18} color={Colors.textTertiary} />}
+              leftIcon={<User size={18} color={Colors.textTertiary} />}
             />
 
             <Input
@@ -168,7 +165,7 @@ export default function LoginScreen() {
                 <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
                   {rememberMe && <Check size={12} color={Colors.white} strokeWidth={3} />}
                 </View>
-                <Text style={styles.rememberText}>Remember me</Text>
+                <Text style={styles.rememberText}>Keep me signed in</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -179,22 +176,42 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Login Action Button */}
             <Button
               title="Sign In"
               onPress={handleLogin}
               loading={loading}
-              variant="primary"
+              fullWidth
               size="lg"
-              icon={<ArrowRight size={18} color={Colors.white} />}
+              variant="primary"
+              style={styles.loginBtn}
+              icon={<ArrowRight size={18} color={Colors.primaryDark} />}
               iconPosition="right"
-              style={styles.submitBtn}
             />
           </View>
 
-          {/* Simple Professional Footer */}
-          <Text style={styles.footerNote}>
-            Need assistance? Contact your field administrator or support team.
-          </Text>
+          {/* Secure Access & Role Auto-Detection Note */}
+          <View style={styles.securityNote}>
+            <View style={styles.securityBadge}>
+              <Text style={styles.roleTag}>Sales Portal</Text>
+              <Text style={styles.roleDivider}>•</Text>
+              <Text style={styles.roleTag}>Delivery Fleet Portal</Text>
+            </View>
+            <Text style={styles.securityText}>
+              Your role is automatically verified upon sign in. No manual role selection required.
+            </Text>
+          </View>
+
+          {/* Sign Up Link for Field Sales Reps */}
+          <View style={styles.signupPrompt}>
+            <Text style={styles.promptText}>New Sales Representative?</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(auth)/signup')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.signupLink}> Register Here</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -212,90 +229,89 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 24,
+    paddingBottom: 40,
     justifyContent: 'center',
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   logoCard: {
-    width: 68,
-    height: 68,
-    borderRadius: Radius.xl,
+    width: 64,
+    height: 64,
+    borderRadius: Radius['2xl'],
     backgroundColor: Colors.surface,
-    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    marginBottom: 10,
+    borderColor: Colors.border,
     ...Shadows.sm,
   },
   logoImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: Radius.lg,
+    width: 42,
+    height: 42,
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.primaryLight,
-    paddingVertical: 3,
+    gap: 5,
+    backgroundColor: Colors.primaryTint,
     paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-    marginBottom: 6,
+    marginBottom: 10,
   },
   verifiedText: {
-    ...Typography.captionSm,
+    fontSize: 10,
     fontWeight: '800',
     color: Colors.primaryDark,
     letterSpacing: 0.8,
-    fontSize: 10,
   },
   appTitle: {
     ...Typography.h1,
     color: Colors.textPrimary,
-    fontSize: 22,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   appSubtitle: {
     ...Typography.bodySm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginTop: 3,
-    maxWidth: 280,
+    maxWidth: 290,
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: Colors.errorBg,
-    borderColor: Colors.error + '40',
+    borderColor: Colors.errorLight,
     borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: 10,
-    marginBottom: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.lg,
+    marginBottom: 16,
   },
   errorText: {
-    flex: 1,
-    ...Typography.captionLg,
+    ...Typography.bodySm,
     color: Colors.error,
-    fontWeight: '600',
+    flex: 1,
   },
   formCard: {
     backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
-    padding: 18,
+    borderRadius: Radius['2xl'],
+    padding: 22,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.xs,
+    borderColor: Colors.border,
+    ...Shadows.md,
   },
   optionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 20,
   },
   rememberRow: {
     flexDirection: 'row',
@@ -308,31 +324,64 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xs,
     borderWidth: 1.5,
     borderColor: Colors.borderStrong,
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surface,
   },
   checkboxActive: {
     backgroundColor: Colors.primaryDark,
     borderColor: Colors.primaryDark,
   },
   rememberText: {
-    ...Typography.labelSm,
+    ...Typography.bodySm,
     color: Colors.textSecondary,
   },
   forgotText: {
-    ...Typography.labelSm,
+    ...Typography.bodySm,
     color: Colors.primaryDark,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  submitBtn: {
+  loginBtn: {
     marginTop: 4,
   },
-  footerNote: {
+  securityNote: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  securityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  roleTag: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  roleDivider: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+  },
+  securityText: {
     ...Typography.captionSm,
     color: Colors.textTertiary,
     textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
+  },
+  signupPrompt: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  promptText: {
+    ...Typography.bodySm,
+    color: Colors.textSecondary,
+  },
+  signupLink: {
+    ...Typography.bodySm,
+    color: Colors.primaryDark,
+    fontWeight: '700',
   },
 });

@@ -1,5 +1,5 @@
 /**
- * Distribo Sales — Premium Design System
+ * Distribo Unified Design System
  * Inspired by professional FMCG/Food ordering UI kits
  * Complete visual language: colors, typography, spacing, shadows, radii
  */
@@ -19,18 +19,23 @@ export const Colors = {
   surface: '#FFFFFF',
   surfaceSecondary: '#F2F5EE',
   surfaceTertiary: '#FAFCF7',
+  card: '#FFFFFF',
+  cardElevated: '#FFFFFF',
   overlay: 'rgba(32, 40, 32, 0.5)',
 
   // Text
+  text: '#202820',
   textPrimary: '#202820',
   textSecondary: '#6B7266',
   textTertiary: '#9BA396',
+  textLight: '#A4ABA1',
   textInverse: '#FFFFFF',
   textAccent: '#294D32',
 
   // Borders
   border: '#E9EDE5',
   borderLight: '#F1F4ED',
+  borderSubtle: '#F0F3ED',
   borderFocus: '#A8D83D',
   borderStrong: '#D0D6CA',
 
@@ -44,9 +49,18 @@ export const Colors = {
   error: '#C43B3B',
   errorLight: '#FDECEC',
   errorBg: '#FEF5F5',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
   info: '#2563EB',
   infoLight: '#EFF6FF',
   infoBg: '#F5F8FF',
+
+  // Delivery-specific Status Indicators
+  statusAssigned: '#3B82F6',
+  statusInTransit: '#F59E0B',
+  statusDelivered: '#16A34A',
+  statusPartial: '#8B5CF6',
+  statusFailed: '#EF4444',
 
   // Neutrals
   white: '#FFFFFF',
@@ -90,7 +104,15 @@ export const Typography = {
   h3: { fontSize: 16, fontWeight: '700' as const, letterSpacing: -0.1, lineHeight: 22 },
   h4: { fontSize: 15, fontWeight: '600' as const, letterSpacing: 0, lineHeight: 20 },
 
+  // Headings (Delivery naming convention)
+  heading1: { fontSize: 24, fontWeight: '700' as const, color: Colors.text },
+  heading2: { fontSize: 20, fontWeight: '700' as const, color: Colors.text },
+  heading3: { fontSize: 16, fontWeight: '600' as const, color: Colors.text },
+
   // Body
+  body: { fontSize: 14, fontWeight: '400' as const, color: Colors.text },
+  bodyMedium: { fontSize: 14, fontWeight: '500' as const, color: Colors.text },
+  bodyBold: { fontSize: 14, fontWeight: '600' as const, color: Colors.text },
   bodyLg: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24 },
   bodyMd: { fontSize: 14, fontWeight: '400' as const, lineHeight: 21 },
   bodySm: { fontSize: 13, fontWeight: '400' as const, lineHeight: 19 },
@@ -101,11 +123,14 @@ export const Typography = {
   labelSm: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
 
   // Captions
+  caption: { fontSize: 12, fontWeight: '400' as const, color: Colors.textSecondary },
+  captionBold: { fontSize: 12, fontWeight: '600' as const, color: Colors.textSecondary },
+  tiny: { fontSize: 10, fontWeight: '500' as const, color: Colors.textSecondary },
   captionLg: { fontSize: 12, fontWeight: '500' as const, lineHeight: 16 },
   captionMd: { fontSize: 11, fontWeight: '500' as const, lineHeight: 15 },
   captionSm: { fontSize: 10, fontWeight: '500' as const, lineHeight: 14 },
 
-  // Numbers
+  // Numbers / Metrics
   statXl: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5, lineHeight: 34 },
   statLg: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.3, lineHeight: 28 },
   statMd: { fontSize: 18, fontWeight: '700' as const, letterSpacing: -0.2, lineHeight: 24 },
@@ -128,7 +153,9 @@ export const Spacing = {
   md: 12,
   lg: 16,
   xl: 20,
+  xxl: 24,
   '2xl': 24,
+  xxxl: 32,
   '3xl': 32,
   '4xl': 40,
   '5xl': 48,
@@ -146,6 +173,8 @@ export const Radius = {
   '3xl': 28,
   full: 9999,
 };
+
+export const BorderRadius = Radius;
 
 // ─── SHADOWS ────────────────────────────────────────────────────
 export const Shadows = {
@@ -210,6 +239,3 @@ export const HitSlop = {
   md: { top: 10, bottom: 10, left: 10, right: 10 },
   lg: { top: 14, bottom: 14, left: 14, right: 14 },
 };
-
-// ─── BACKWARD COMPAT (deprecated — use Colors/Spacing/Radius directly) ──
-export const BorderRadius = Radius;

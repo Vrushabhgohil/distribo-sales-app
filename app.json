@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Distribo Sales",
-    "slug": "distribo-sales",
+    "name": "Distribo",
+    "slug": "distribo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "distribosales",
+    "scheme": "distribo",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.aarvi.distribosales",
+      "bundleIdentifier": "com.aarvi.distribo",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Distribo Sales tracks your beat visit coordinates and sales territory coverage during active work hours.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Distribo Sales requires background location to record salesperson live tracking and delivery route coordination during working hours.",
+        "NSLocationWhenInUseUsageDescription": "Distribo tracks your store visit coordinates and delivery route drops during active working hours.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Distribo requires background location to record live beat tracking and transit updates for sales and delivery coordination.",
         "UIBackgroundModes": [
           "location",
           "fetch"
@@ -20,7 +20,7 @@
       }
     },
     "android": {
-      "package": "com.aarvi.distribosales",
+      "package": "com.aarvi.distribo",
       "adaptiveIcon": {
         "backgroundColor": "#16A34A",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
@@ -54,7 +54,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Distribo Sales to track your sales beat route and store check-in locations during work hours.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Distribo to track your beat route and delivery drop locations during work hours.",
           "isAndroidBackgroundLocationEnabled": true
         }
       ]

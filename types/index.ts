@@ -1,4 +1,12 @@
-export type Role = 'admin' | 'manager' | 'sales_rep' | 'delivery_pilot';
+export type Role =
+  | 'admin'
+  | 'manager'
+  | 'sales_rep'
+  | 'delivery_pilot'
+  | 'sales_person'
+  | 'delivery_person';
+
+export type UserRole = 'sales_person' | 'delivery_person';
 
 export interface UserProfile {
   id: string;
@@ -23,6 +31,36 @@ export interface SalesPersonProfile {
   joining_date: string;
   assigned_area?: string | null;
   status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryPersonProfile {
+  id: string;
+  user_id: string | null;
+  name: string;
+  employee_id: string;
+  photo_url?: string | null;
+  mobile: string;
+  email: string;
+  password?: string | null;
+  address?: string | null;
+  vehicle_type: string;
+  vehicle_number: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Warehouse {
+  id: string;
+  name: string;
+  code: string;
+  address: string;
+  city: string;
+  contact_person?: string | null;
+  contact_mobile?: string | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -150,8 +188,34 @@ export interface Order {
   created_at: string;
   updated_at: string;
   store?: Store;
-  salesperson?: SalesPersonProfile;
+  salesperson?: SalesPersonProfile | {
+    id: string;
+    name: string;
+    employee_id: string;
+    mobile: string;
+  };
   items?: OrderItem[];
+}
+
+export type DeliveryAssignmentStatus =
+  | 'assigned'
+  | 'in_transit'
+  | 'delivered'
+  | 'partially_delivered'
+  | 'failed';
+
+export interface DeliveryAssignment {
+  id: string;
+  order_id: string;
+  delivery_person_id: string;
+  assigned_date: string;
+  status: DeliveryAssignmentStatus;
+  delivery_notes?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  order?: Order;
+  delivery_person?: DeliveryPersonProfile;
 }
 
 export interface StoreVisit {
@@ -171,7 +235,8 @@ export interface StoreVisit {
 
 export interface LocationEntry {
   id: string;
-  salesperson_id: string;
+  salesperson_id?: string | null;
+  delivery_person_id?: string | null;
   latitude: number;
   longitude: number;
   status: 'online' | 'travelling' | 'on_visit' | 'idle' | 'offline';
@@ -227,3 +292,11 @@ export interface CartItem {
   lineTotal: number;
 }
 
+export interface OfflineQueueItem {
+  id: string;
+  action: 'CONFIRM_PICKUP' | 'START_DELIVERY' | 'COMPLETE_DELIVERY' | 'RECORD_PARTIAL_DELIVERY';
+  payload: any;
+  timestamp: number;
+  status: 'pending' | 'syncing' | 'failed';
+  error?: string;
+}

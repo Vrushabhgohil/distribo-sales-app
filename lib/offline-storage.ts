@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Product, Store, CartItem } from '@/types';
+import { Product, Store, CartItem, DeliveryAssignment, Order, OfflineQueueItem } from '@/types';
 
 const KEYS = {
   STORES_CACHE: '@distribo_stores_cache',
@@ -7,6 +7,10 @@ const KEYS = {
   ORDER_DRAFTS: '@distribo_order_drafts',
   LAST_SYNC_TIME: '@distribo_last_sync_time',
   PENDING_LOCATIONS: '@distribo_pending_locations',
+  DELIVERIES: '@distribo_cached_deliveries',
+  ORDERS: '@distribo_cached_orders',
+  OFFLINE_QUEUE: '@distribo_delivery_offline_queue',
+  PROFILE: '@distribo_delivery_profile',
 };
 
 export interface LocalOrderDraft {
@@ -20,6 +24,7 @@ export interface LocalOrderDraft {
 }
 
 export const offlineStorage = {
+  // --- SALES CACHE ---
   async saveStores(stores: Store[]): Promise<void> {
     try {
       await AsyncStorage.setItem(KEYS.STORES_CACHE, JSON.stringify(stores));
@@ -94,7 +99,8 @@ export const offlineStorage = {
   },
 
   async queuePendingLocation(location: {
-    salesperson_id: string;
+    salesperson_id?: string;
+    delivery_person_id?: string;
     latitude: number;
     longitude: number;
     status: string;
@@ -103,7 +109,6 @@ export const offlineStorage = {
   }): Promise<void> {
     try {
       const current = await this.getPendingLocations();
-      // Keep last 100 max
       const updated = [...current.slice(-99), location];
       await AsyncStorage.setItem(KEYS.PENDING_LOCATIONS, JSON.stringify(updated));
     } catch (e) {
@@ -127,5 +132,95 @@ export const offlineStorage = {
       console.warn('Failed to clear pending locations:', e);
     }
   },
-};
 
+  // --- DELIVERY CACHE ---
+  async saveDeliveries(deliveries: DeliveryAssignment[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.DELIVERIES, JSON.stringify(deliveries));
+    } catch (err) {
+      console.warn('Error saving deliveries to offline cache:', err);
+    }
+  },
+
+  async getDeliveries(): Promise<DeliveryAssignment[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.DELIVERIES);
+      return data ? JSON.parse(data) : [];
+    } catch (err) {
+      console.warn('Error reading deliveries from offline cache:', err);
+      return [];
+    }
+  },
+
+  async saveOrder(order: Order): Promise<void> {
+    try {
+      const allOrders = await this.getAllCachedOrders();
+      const filtered = allOrders.filter((o) => o.id !== order.id);
+      filtered.push(order);
+      await AsyncStorage.setItem(KEYS.ORDERS, JSON.stringify(filtered));
+    } catch (err) {
+      console.warn('Error caching order:', err);
+    }
+  },
+
+  async getOrder(orderId: string): Promise<Order | null> {
+    try {
+      const all = await this.getAllCachedOrders();
+      return all.find((o) => o.id === orderId) || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async getAllCachedOrders(): Promise<Order[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.ORDERS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  // --- DELIVERY OFFLINE QUEUE MANAGEMENT ---
+  async getOfflineQueue(): Promise<OfflineQueueItem[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.OFFLINE_QUEUE);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async addToOfflineQueue(item: Omit<OfflineQueueItem, 'id' | 'timestamp' | 'status'>): Promise<OfflineQueueItem> {
+    const queue = await this.getOfflineQueue();
+    const newItem: OfflineQueueItem = {
+      ...item,
+      id: `queue_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: Date.now(),
+      status: 'pending',
+    };
+    queue.push(newItem);
+    await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+    return newItem;
+  },
+
+  async removeFromOfflineQueue(id: string): Promise<void> {
+    const queue = await this.getOfflineQueue();
+    const updated = queue.filter((item) => item.id !== id);
+    await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(updated));
+  },
+
+  async updateQueueItemStatus(id: string, status: 'pending' | 'syncing' | 'failed', error?: string): Promise<void> {
+    const queue = await this.getOfflineQueue();
+    const index = queue.findIndex((item) => item.id === id);
+    if (index >= 0) {
+      queue[index].status = status;
+      if (error) queue[index].error = error;
+      await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+    }
+  },
+
+  async clearOfflineQueue(): Promise<void> {
+    await AsyncStorage.removeItem(KEYS.OFFLINE_QUEUE);
+  },
+};

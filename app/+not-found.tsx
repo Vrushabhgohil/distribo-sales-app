@@ -7,9 +7,9 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'Page Not Found', headerShown: true }} />
       <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
-        <Link href="/(tabs)" style={styles.link}>
-          <Text style={styles.linkText}>Return to Sales Dashboard</Text>
+        <Text style={styles.title}>{"This screen doesn't exist."}</Text>
+        <Link href="/" style={styles.link}>
+          <Text style={styles.linkText}>Return to Distribo Home</Text>
         </Link>
       </View>
     </>

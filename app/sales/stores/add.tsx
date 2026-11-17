@@ -1,0 +1,505 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import * as Location from 'expo-location';
+import {
+  Store as StoreIcon,
+  User,
+  Phone,
+  MapPin,
+  Compass,
+  CreditCard,
+  Check,
+  ArrowLeft,
+  RefreshCw,
+} from 'lucide-react-native';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Header } from '@/components/common/Header';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/features/auth/AuthContext';
+import { dataService } from '@/services/data-service';
+
+const storeSchema = z.object({
+  name: z.string().min(2, 'Store name must be at least 2 characters'),
+  owner_name: z.string().min(2, 'Owner name is required'),
+  mobile: z.string().min(10, 'Valid 10-digit mobile number required').max(15),
+  alternate_mobile: z.string().optional(),
+  email: z.string().optional(),
+  address: z.string().min(5, 'Full street address is required'),
+  area: z.string().min(2, 'Territory/Area is required'),
+  city: z.string().min(2, 'City is required'),
+  pincode: z.string().min(6, 'Valid 6-digit pincode is required'),
+  store_type: z.string().min(1, 'Store type is required'),
+  credit_limit: z.number().min(0, 'Credit limit must be positive'),
+  payment_terms: z.string(),
+});
+
+type StoreFormData = z.infer<typeof storeSchema>;
+
+const STORE_TYPES = [
+  'Kirana / Grocery',
+  'General Store',
+  'Supermarket',
+  'Provision Store',
+  'Retail Outlet',
+  'Bakery / Snacks',
+];
+
+export default function AddStoreScreen() {
+  const router = useRouter();
+  const { salesperson } = useAuth();
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [fetchingGps, setFetchingGps] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<StoreFormData>({
+    resolver: zodResolver(storeSchema),
+    defaultValues: {
+      name: '',
+      owner_name: '',
+      mobile: '',
+      alternate_mobile: '',
+      email: '',
+      address: '',
+      area: salesperson?.assigned_area || 'Rajkot',
+      city: 'Rajkot',
+      pincode: '360001',
+      store_type: 'Kirana / Grocery',
+      credit_limit: 50000,
+      payment_terms: 'Net 30',
+    },
+  });
+
+  const selectedStoreType = watch('store_type');
+
+  const captureCurrentGps = async () => {
+    setFetchingGps(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Please enable location permissions to capture store GPS.');
+        setFetchingGps(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setGpsCoords({
+        lat: location.coords.latitude,
+        lng: location.coords.longitude,
+      });
+    } catch (err: any) {
+      Alert.alert('GPS Error', 'Could not obtain device GPS coordinates: ' + err.message);
+    } finally {
+      setFetchingGps(false);
+    }
+  };
+
+  useEffect(() => {
+    captureCurrentGps();
+  }, []);
+
+  const onSubmit = async (data: StoreFormData) => {
+    setSubmitting(true);
+    const result = await dataService.createStore({
+      name: data.name.trim(),
+      owner_name: data.owner_name.trim(),
+      mobile: data.mobile.trim(),
+      alternate_mobile: data.alternate_mobile?.trim() || null,
+      email: data.email?.trim() || null,
+      address: data.address.trim(),
+      area: data.area.trim(),
+      city: data.city.trim(),
+      pincode: data.pincode.trim(),
+      store_type: data.store_type,
+      credit_limit: data.credit_limit,
+      payment_terms: data.payment_terms,
+      gps_lat: gpsCoords?.lat || null,
+      gps_lng: gpsCoords?.lng || null,
+      assigned_salesperson_id: salesperson?.id || null,
+      status: 'active',
+    });
+
+    setSubmitting(false);
+
+    if (result.success) {
+      Alert.alert('Store Registered', `${data.name} has been enrolled in your beat route.`, [
+        { text: 'View Beat Stores', onPress: () => router.replace('/sales/(tabs)/stores') },
+      ]);
+    } else {
+      Alert.alert('Registration Failed', result.error || 'Could not register store outlet.');
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <Header
+        title="Register New Store"
+        subtitle="Add retail outlet to your beat route"
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={Colors.textPrimary} />
+          </TouchableOpacity>
+        }
+      />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Section 1: Store & Owner Identity */}
+          <View style={styles.card}>
+            <Text style={styles.sectionHeading}>Store & Owner Identity</Text>
+
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Retail Store / Shop Name *"
+                  placeholder="e.g. Radhe Krishna Provision Store"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.name?.message}
+                  leftIcon={<StoreIcon size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="owner_name"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Owner / Proprietor Name *"
+                  placeholder="e.g. Hasmukhbhai Patel"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.owner_name?.message}
+                  leftIcon={<User size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="mobile"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Primary Mobile Number *"
+                  placeholder="e.g. 9876543210"
+                  keyboardType="phone-pad"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.mobile?.message}
+                  leftIcon={<Phone size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="alternate_mobile"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Alternate Mobile (Optional)"
+                  placeholder="e.g. 9876543211"
+                  keyboardType="phone-pad"
+                  value={value}
+                  onChangeText={onChange}
+                  leftIcon={<Phone size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            {/* Store Type Chips Selector */}
+            <Text style={styles.inputLabel}>Outlet Category Type</Text>
+            <View style={styles.typeChipsRow}>
+              {STORE_TYPES.map((type) => {
+                const isSel = selectedStoreType === type;
+                return (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setValue('store_type', type)}
+                    style={[styles.typeChip, isSel && styles.typeChipActive]}
+                  >
+                    <Text style={[styles.typeChipText, isSel && styles.typeChipTextActive]}>
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Section 2: Address & Territory */}
+          <View style={styles.card}>
+            <Text style={styles.sectionHeading}>Location & Territory</Text>
+
+            <Controller
+              control={control}
+              name="address"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Full Shop Address *"
+                  placeholder="Shop #, Building, Street name..."
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.address?.message}
+                  multiline
+                  numberOfLines={2}
+                  leftIcon={<MapPin size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            <View style={styles.twoColRow}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Controller
+                  control={control}
+                  name="area"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Beat Area *"
+                      placeholder="e.g. Navrangpura"
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.area?.message}
+                    />
+                  )}
+                />
+              </View>
+
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Controller
+                  control={control}
+                  name="city"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="City *"
+                      placeholder="e.g. Ahmedabad"
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.city?.message}
+                    />
+                  )}
+                />
+              </View>
+            </View>
+
+            <Controller
+              control={control}
+              name="pincode"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="PIN Code *"
+                  placeholder="e.g. 380009"
+                  keyboardType="number-pad"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.pincode?.message}
+                />
+              )}
+            />
+
+            {/* Live GPS Capture Box */}
+            <View style={styles.gpsCaptureBox}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.gpsBoxTitle}>GPS Geofence Pin</Text>
+                <Text style={styles.gpsBoxCoord}>
+                  {gpsCoords
+                    ? `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`
+                    : 'Location not pinned yet'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={captureCurrentGps}
+                disabled={fetchingGps}
+                style={styles.gpsPinBtn}
+              >
+                <RefreshCw size={14} color={Colors.primaryDark} />
+                <Text style={styles.gpsPinText}>
+                  {fetchingGps ? 'Locating...' : 'Re-capture'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Section 3: Credit & Terms */}
+          <View style={styles.card}>
+            <Text style={styles.sectionHeading}>Credit Limit & Payment</Text>
+
+            <Controller
+              control={control}
+              name="credit_limit"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Approved Credit Limit (₹)"
+                  placeholder="50000"
+                  keyboardType="numeric"
+                  value={value ? String(value) : ''}
+                  onChangeText={(val) => onChange(Number(val) || 0)}
+                  error={errors.credit_limit?.message}
+                  leftIcon={<CreditCard size={18} color={Colors.textTertiary} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="payment_terms"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Payment Terms"
+                  placeholder="e.g. Net 15 Days, Cash On Delivery"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+          </View>
+
+          <Button
+            title="Register Store Outlet"
+            variant="primary"
+            size="xl"
+            loading={submitting}
+            onPress={() => handleSubmit(onSubmit)()}
+            style={styles.submitBtn}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    padding: 18,
+    paddingBottom: 40,
+  },
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius['2xl'],
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginBottom: 14,
+    ...Shadows.xs,
+  },
+  sectionHeading: {
+    ...Typography.h3,
+    color: Colors.textPrimary,
+    marginBottom: 14,
+  },
+  inputLabel: {
+    ...Typography.labelMd,
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  typeChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  typeChip: {
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  typeChipActive: {
+    backgroundColor: Colors.primaryDark,
+    borderColor: Colors.primaryDark,
+  },
+  typeChipText: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  typeChipTextActive: {
+    color: Colors.white,
+    fontWeight: '800',
+  },
+  twoColRow: {
+    flexDirection: 'row',
+  },
+  gpsCaptureBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: Radius.lg,
+    padding: 12,
+    marginTop: 8,
+  },
+  gpsBoxTitle: {
+    ...Typography.labelSm,
+    color: Colors.textPrimary,
+  },
+  gpsBoxCoord: {
+    ...Typography.captionSm,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  gpsPinBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.primaryLight,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radius.md,
+  },
+  gpsPinText: {
+    ...Typography.buttonSm,
+    color: Colors.primaryDark,
+  },
+  submitBtn: {
+    marginTop: 4,
+    marginBottom: 20,
+  },
+});

@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   style,
 }) => {
-  const locationTracker = showTrackingIndicator ? useLocationTracker() : null;
+  const locationTracker = useLocationTracker();
 
   return (
     <View style={[styles.container, style]}>
