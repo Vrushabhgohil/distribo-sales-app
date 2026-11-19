@@ -1,6 +1,6 @@
-# Distribo Sales — FMCG Sales Person Mobile Application
+# Motiba Sales — FMCG Sales Person Mobile Application
 
-Official cross-platform mobile application for field sales representatives of **Distribo — FMCG Sales & Distribution Management Platform**. Built with **React Native**, **Expo SDK 58**, **TypeScript**, **Expo Router**, and backed directly by **Supabase PostgreSQL & Auth**.
+Official cross-platform mobile application for field sales representatives of **Motiba — FMCG Sales & Distribution Management Platform**. Built with **React Native**, **Expo SDK 58**, **TypeScript**, **Expo Router**, and backed directly by **Supabase PostgreSQL & Auth**.
 
 ---
 
@@ -73,7 +73,7 @@ It is configured across:
      recorded_at: '2026-11-03T04:35:00.000Z'
    }
    ```
-4. Sibling project **Distribo-CRM** (Admin Web Portal) subscribes to `location_history` via Supabase Realtime (`subscribeToLiveTelemetry`).
+4. Sibling project **Motiba-CRM** (Admin Web Portal) subscribes to `location_history` via Supabase Realtime (`subscribeToLiveTelemetry`).
 5. The Admin's `LiveLocationMap` immediately updates the salesperson's marker, status pulse, and trail on the Google/OpenStreetMap interface.
 
 ### End-to-End Verification Procedure:
@@ -83,9 +83,9 @@ It is configured across:
 2. Grant Location Permission when prompted.
 3. Tap **Start Beat GPS Tracking** on the Home dashboard or in `Location Tracking`.
 4. Check that live coordinates appear (e.g. `21.2381, 72.8785`).
-5. Open the Admin Web Portal (`Distribo-CRM`) in your browser at `http://localhost:5173/location-tracking`.
+5. Open the Admin Web Portal (`Motiba-CRM`) in your browser at `http://localhost:5173/location-tracking`.
 6. Confirm that **Vrushabh Gohil** appears with status `online` / `on_visit` and that his ping timestamp updates in real time.
-7. Conduct a store beat visit by checking in at **Distribos**:
+7. Conduct a store beat visit by checking in at **Motiba Stores**:
    - The coordinates will be automatically tagged with `status: 'on_visit'` and linked to that outlet's `store_id`.
 
 ---

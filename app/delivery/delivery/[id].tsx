@@ -287,7 +287,7 @@ export default function DeliveryExecutionScreen() {
         {isPartial && (
           <View style={styles.partialAlertCard}>
             <View style={styles.partialAlertHeader}>
-              <AlertTriangle size={18} color="#B45309" />
+              <AlertTriangle size={18} color={Colors.goldDark} />
               <Text style={styles.partialAlertTitle}>Partial Drop Detected</Text>
             </View>
             <Text style={styles.partialAlertDesc}>
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: '#D7EBB6',
+    borderColor: Colors.borderLight,
   },
   mapsBtn: {
     backgroundColor: Colors.primaryDark,
@@ -465,11 +465,11 @@ const styles = StyleSheet.create({
     color: Colors.primaryDark,
   },
   partialAlertCard: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.goldTint,
     marginVertical: Spacing.sm,
   },
   partialAlertHeader: {
@@ -480,11 +480,11 @@ const styles = StyleSheet.create({
   },
   partialAlertTitle: {
     ...Typography.captionBold,
-    color: '#B45309',
+    color: Colors.goldDark,
   },
   partialAlertDesc: {
     ...Typography.caption,
-    color: '#92400E',
+    color: Colors.goldDark,
     lineHeight: 17,
   },
   notesCard: {

@@ -121,13 +121,13 @@ export default function DashboardScreen() {
 
             {/* Out for Delivery */}
             <TouchableOpacity
-              style={[styles.metricCard, { borderLeftColor: '#F97316' }]}
+              style={[styles.metricCard, { borderLeftColor: Colors.goldDark }]}
               onPress={() => router.push('/delivery/(tabs)/deliveries' as any)}
               activeOpacity={0.8}
             >
               <View style={styles.metricCardHeader}>
                 <Text style={styles.metricLabel}>In Transit</Text>
-                <Truck size={16} color="#F97316" />
+                <Truck size={16} color={Colors.goldDark} />
               </View>
               <Text style={styles.metricNumber}>{metrics.outForDelivery}</Text>
               <Text style={styles.metricSub}>On the Route</Text>
@@ -276,9 +276,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF5FF',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: Colors.primaryTint,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginTop: Spacing.md,

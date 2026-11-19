@@ -83,7 +83,7 @@ const FAQS: FAQItem[] = [
     category: 'issues',
     question: 'What should I do if the application is offline or not syncing?',
     answer:
-      'Distribo Delivery is built with offline support. If network connectivity drops in rural or basement godown areas, your pickups and deliveries are saved locally. Once internet is restored, tap "Sync Now" on the banner or in your Profile to push updates to the central cloud.',
+      'Motiba Delivery is built with offline support. If network connectivity drops in rural or basement godown areas, your pickups and deliveries are saved locally. Once internet is restored, tap "Sync Now" on the banner or in your Profile to push updates to the central cloud.',
   },
 ];
 

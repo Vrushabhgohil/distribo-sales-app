@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#D4ECA8',
+    borderColor: Colors.borderLight,
   },
   warehouseLabel: {
     ...Typography.tiny,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D4ECA8',
+    borderColor: Colors.borderLight,
   },
   qtyLabel: {
     ...Typography.tiny,
@@ -426,11 +426,11 @@ const styles = StyleSheet.create({
     height: 70,
   },
   checklistCard: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.secondaryLight,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: Colors.secondaryTint,
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   },
   checkText: {
     ...Typography.caption,
-    color: '#166534',
+    color: Colors.secondary,
     fontSize: 12,
   },
   footerBar: {

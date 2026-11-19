@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: '#D7EBB6',
+    borderColor: Colors.borderLight,
   },
   mapsActionBtn: {
     backgroundColor: Colors.primaryDark,

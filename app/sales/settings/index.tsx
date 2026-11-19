@@ -140,8 +140,8 @@ export default function SettingsScreen() {
         {/* GPS Telemetry Summary */}
         <View style={styles.card}>
           <View style={styles.cardTitleRow}>
-            <View style={[styles.iconBox, { backgroundColor: '#DCFCE7' }]}>
-              <Radio size={18} color="#15803D" />
+            <View style={[styles.iconBox, { backgroundColor: Colors.secondaryLight }]}>
+              <Radio size={18} color={Colors.secondary} />
             </View>
             <Text style={styles.cardTitle}>Active Telemetry Profile</Text>
           </View>
@@ -162,8 +162,8 @@ export default function SettingsScreen() {
         {/* Enterprise & Version Card */}
         <View style={styles.card}>
           <View style={styles.cardTitleRow}>
-            <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
-              <Smartphone size={18} color="#2563EB" />
+            <View style={[styles.iconBox, { backgroundColor: Colors.primaryLight }]}>
+              <Smartphone size={18} color={Colors.primary} />
             </View>
             <Text style={styles.cardTitle}>System Diagnostics</Text>
           </View>
@@ -171,12 +171,12 @@ export default function SettingsScreen() {
           <View style={styles.statList}>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Enterprise Account:</Text>
-              <Text style={styles.statValue}>Distribo</Text>
+              <Text style={styles.statValue}>Motiba</Text>
             </View>
 
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>App Framework:</Text>
-              <Text style={styles.statValue}>Distribo Sales v1.0.0</Text>
+              <Text style={styles.statValue}>Motiba Sales v1.0.0</Text>
             </View>
 
             <View style={styles.statRow}>

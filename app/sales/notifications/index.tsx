@@ -63,13 +63,13 @@ export default function NotificationsScreen() {
   const getNotifIcon = (type: NotificationItem['type']) => {
     switch (type) {
       case 'order':
-        return <ShoppingBag size={18} color="#15803D" />;
+        return <ShoppingBag size={18} color={Colors.secondary} />;
       case 'delivery':
-        return <Truck size={18} color="#0369A1" />;
+        return <Truck size={18} color={Colors.goldDark} />;
       case 'inventory':
-        return <Package size={18} color="#B45309" />;
+        return <Package size={18} color={Colors.gold} />;
       case 'follow_up':
-        return <CalendarClock size={18} color="#7E22CE" />;
+        return <CalendarClock size={18} color={Colors.primary} />;
       default:
         return <Info size={18} color={Colors.textSecondary} />;
     }

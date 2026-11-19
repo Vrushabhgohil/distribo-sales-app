@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Distribo",
-    "slug": "distribo",
+    "name": "Motiba",
+    "slug": "motiba",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "distribo",
+    "scheme": "motiba",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.aarvi.distribo",
+      "bundleIdentifier": "com.aarvi.motiba",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Distribo tracks your store visit coordinates and delivery route drops during active working hours.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Distribo requires background location to record live beat tracking and transit updates for sales and delivery coordination.",
+        "NSLocationWhenInUseUsageDescription": "Motiba tracks your store visit coordinates and delivery route drops during active working hours.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Motiba requires background location to record live beat tracking and transit updates for sales and delivery coordination.",
         "UIBackgroundModes": [
           "location",
           "fetch"
@@ -20,9 +20,9 @@
       }
     },
     "android": {
-      "package": "com.aarvi.distribo",
+      "package": "com.aarvi.motiba",
       "adaptiveIcon": {
-        "backgroundColor": "#16A34A",
+        "backgroundColor": "#970F18",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "permissions": [
@@ -37,7 +37,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -46,7 +46,7 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#F7F8F5"
+          "backgroundColor": "#FFF8E9"
         }
       ],
       "expo-secure-store",
@@ -54,7 +54,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Distribo to track your beat route and delivery drop locations during work hours.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Motiba to track your beat route and delivery drop locations during work hours.",
           "isAndroidBackgroundLocationEnabled": true
         }
       ]

@@ -37,16 +37,16 @@ const HIGHLIGHT_FEATURES = [
     title: 'Instant Order Booking',
     subtitle: 'Live wholesale FMCG catalogue, dynamic pricing & bulk discounts',
     tag: 'CATALOGUE',
-    tagBg: Colors.blueLight,
-    tagColor: Colors.blue,
+    tagBg: Colors.goldLight,
+    tagColor: Colors.goldDark,
   },
   {
     icon: TrendingUp,
     title: 'Credit & Payment Ledger',
     subtitle: 'Transparent store balance, credit limits & collection tracking',
     tag: 'FINANCES',
-    tagBg: Colors.purpleLight,
-    tagColor: Colors.purple,
+    tagBg: Colors.secondaryLight,
+    tagColor: Colors.secondary,
   },
 ];
 
@@ -72,12 +72,12 @@ export default function WelcomeScreen() {
             </View>
             <View style={styles.verifiedTag}>
               <ShieldCheck size={13} color={Colors.primaryDark} />
-              <Text style={styles.verifiedTagText}>DISTRO SALES</Text>
+              <Text style={styles.verifiedTagText}>MOTIBA SALES</Text>
             </View>
           </View>
 
           <Text style={styles.headline}>
-            Distribo<Text style={styles.headlineAccent}>Sales</Text>
+            Motiba<Text style={styles.headlineAccent}>Sales</Text>
           </Text>
           <Text style={styles.subheadline}>
             Next-Gen FMCG Sales & Beat Distribution Portal
@@ -149,7 +149,7 @@ export default function WelcomeScreen() {
 
         {/* Legal / Enterprise watermark */}
         <Text style={styles.footerLegal}>
-          Distribo Mobile v1.0 • Enterprise Distribution Framework
+          Motiba Mobile v1.0 • Enterprise Distribution Framework
         </Text>
       </ScrollView>
     </SafeAreaView>

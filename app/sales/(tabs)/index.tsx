@@ -214,7 +214,7 @@ export default function HomeScreen() {
                   styles.pulseDot,
                   {
                     backgroundColor: isTracking
-                      ? '#22C55E'
+                      ? Colors.secondary
                       : permissionDenied
                       ? Colors.warning
                       : Colors.gray400,
@@ -246,7 +246,7 @@ export default function HomeScreen() {
               onPress={openAppSettings}
               style={[styles.gpsButton, styles.gpsButtonStart]}
             >
-              <Text style={[styles.gpsBtnText, { color: '#166534' }]}>Settings</Text>
+              <Text style={[styles.gpsBtnText, { color: Colors.secondary }]}>Settings</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.gpsBadgeActive}>
@@ -350,8 +350,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/(tabs)/stores')}
             style={styles.gridCard}
           >
-            <View style={[styles.gridIconCircle, { backgroundColor: '#E0F2FE' }]}>
-              <StoreIcon size={20} color="#0369A1" />
+            <View style={[styles.gridIconCircle, { backgroundColor: Colors.goldLight }]}>
+              <StoreIcon size={20} color={Colors.goldDark} />
             </View>
             <Text style={styles.gridVal}>{stores.length}</Text>
             <Text style={styles.gridLabel}>Territory Outlets</Text>
@@ -364,8 +364,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/(tabs)/orders')}
             style={styles.gridCard}
           >
-            <View style={[styles.gridIconCircle, { backgroundColor: '#DCFCE7' }]}>
-              <CheckCircle2 size={20} color="#15803D" />
+            <View style={[styles.gridIconCircle, { backgroundColor: Colors.secondaryLight }]}>
+              <CheckCircle2 size={20} color={Colors.secondary} />
             </View>
             <Text style={styles.gridVal}>{confirmedOrders.length}</Text>
             <Text style={styles.gridLabel}>Approved Orders</Text>
@@ -378,8 +378,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/(tabs)/follow-ups')}
             style={styles.gridCard}
           >
-            <View style={[styles.gridIconCircle, { backgroundColor: '#FEF3C7' }]}>
-              <CalendarClock size={20} color="#B45309" />
+            <View style={[styles.gridIconCircle, { backgroundColor: Colors.goldLight }]}>
+              <CalendarClock size={20} color={Colors.gold} />
             </View>
             <Text style={styles.gridVal}>{pendingFollowUps.length}</Text>
             <Text style={styles.gridLabel}>Pending Tasks</Text>
@@ -392,8 +392,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/(tabs)/stores')}
             style={styles.gridCard}
           >
-            <View style={[styles.gridIconCircle, { backgroundColor: '#F3E8FF' }]}>
-              <CreditCard size={20} color="#7E22CE" />
+            <View style={[styles.gridIconCircle, { backgroundColor: Colors.primaryLight }]}>
+              <CreditCard size={20} color={Colors.primary} />
             </View>
             <Text style={styles.gridVal}>
               ₹{totalOutstandingEstimate > 100000 ? `${(totalOutstandingEstimate / 100000).toFixed(1)}L` : totalOutstandingEstimate.toLocaleString('en-IN')}
@@ -416,7 +416,7 @@ export default function HomeScreen() {
             style={styles.launchpadBtn}
           >
             <View style={[styles.launchpadIcon, { backgroundColor: Colors.primaryLight }]}>
-              <MapPin size={22} color={Colors.primaryDark} />
+              <MapPin size={22} color={Colors.primary} />
             </View>
             <Text style={styles.launchpadLabel}>Store Check-In</Text>
             <Text style={styles.launchpadSub}>GPS Geofence</Text>
@@ -427,8 +427,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/orders/create' as any)}
             style={styles.launchpadBtn}
           >
-            <View style={[styles.launchpadIcon, { backgroundColor: '#FFF4ED' }]}>
-              <PlusCircle size={22} color="#EA580C" />
+            <View style={[styles.launchpadIcon, { backgroundColor: Colors.goldLight }]}>
+              <PlusCircle size={22} color={Colors.goldDark} />
             </View>
             <Text style={styles.launchpadLabel}>Book Order</Text>
             <Text style={styles.launchpadSub}>Direct Dispatch</Text>
@@ -439,8 +439,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/products' as any)}
             style={styles.launchpadBtn}
           >
-            <View style={[styles.launchpadIcon, { backgroundColor: '#EFF6FF' }]}>
-              <ShoppingBag size={22} color="#2563EB" />
+            <View style={[styles.launchpadIcon, { backgroundColor: Colors.secondaryLight }]}>
+              <ShoppingBag size={22} color={Colors.secondary} />
             </View>
             <Text style={styles.launchpadLabel}>Catalogue</Text>
             <Text style={styles.launchpadSub}>Stock & Pricing</Text>
@@ -451,8 +451,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/sales/(tabs)/follow-ups')}
             style={styles.launchpadBtn}
           >
-            <View style={[styles.launchpadIcon, { backgroundColor: '#F3EEFF' }]}>
-              <CalendarClock size={22} color="#7C3AED" />
+            <View style={[styles.launchpadIcon, { backgroundColor: Colors.goldLight }]}>
+              <CalendarClock size={22} color={Colors.goldDark} />
             </View>
             <Text style={styles.launchpadLabel}>Follow-ups</Text>
             <Text style={styles.launchpadSub}>Tasks & Collections</Text>
@@ -617,12 +617,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22C55E',
+    backgroundColor: Colors.secondary,
   },
   roleTag: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.6,
   },
   userName: {
@@ -716,34 +716,34 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   gpsButtonStart: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: Colors.secondaryTint,
   },
   gpsButtonStop: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: Colors.primaryTint,
   },
   gpsBtnText: {
     ...Typography.buttonSm,
   },
   gpsBadgeActive: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: Colors.secondaryTint,
   },
   gpsBadgeText: {
     ...Typography.captionSm,
-    color: '#15803D',
+    color: Colors.secondary,
     fontWeight: '700',
   },
   activeVisitCard: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#86EFAC',
+    backgroundColor: Colors.surfaceSecondary,
+    borderColor: Colors.gold,
     borderWidth: 1.5,
     borderRadius: Radius.xl,
     padding: 16,
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     paddingVertical: 3,
     paddingHorizontal: 10,
     borderRadius: Radius.full,
@@ -769,12 +769,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.secondary,
   },
   visitPillText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: '#166534',
+    color: Colors.secondary,
     letterSpacing: 0.6,
   },
   visitTimeText: {

@@ -38,7 +38,7 @@ export const DeliveryHeader: React.FC = () => {
       <View style={styles.topRow}>
         <View style={styles.leftSection}>
           <Image
-            source={require('@/assets/images/distribo-full-logo.png')}
+            source={require('@/assets/images/motiba-full-logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />

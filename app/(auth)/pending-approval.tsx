@@ -27,7 +27,7 @@ export default function PendingApprovalScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.appTitle}>Distribo Sales</Text>
+          <Text style={styles.appTitle}>Motiba Sales</Text>
         </View>
 
         {/* Central Approval Card */}

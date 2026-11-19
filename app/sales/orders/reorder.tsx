@@ -225,7 +225,7 @@ export default function ReorderScreen() {
           </View>
 
           <View style={styles.adminNotice}>
-            <Clock size={14} color="#B45309" />
+            <Clock size={14} color={Colors.goldDark} />
             <Text style={styles.adminNoticeText}>
               Every reorder must be verified and approved by Central Admin before fulfillment.
             </Text>
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     padding: 10,
     borderRadius: Radius.md,
     marginTop: 12,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   adminNoticeText: {
     flex: 1,
     ...Typography.captionSm,
-    color: '#B45309',
+    color: Colors.goldDark,
     lineHeight: 16,
   },
   reorderSubmitBtn: {

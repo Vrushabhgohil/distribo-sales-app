@@ -383,7 +383,7 @@ export default function CreateOrderScreen() {
                 </Text>
               </View>
               <View style={styles.pendingAdminBadge}>
-                <Clock size={12} color="#B45309" />
+                <Clock size={12} color={Colors.goldDark} />
                 <Text style={styles.pendingAdminText}>Awaiting Admin Approval</Text>
               </View>
             </View>
@@ -430,7 +430,7 @@ export default function CreateOrderScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.successIconCircle}>
-              <CheckCircle2 size={44} color="#15803D" />
+              <CheckCircle2 size={44} color={Colors.secondary} />
             </View>
 
             <Text style={styles.modalSuccessTitle}>Order Placed Successfully!</Text>
@@ -681,14 +681,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: Radius.full,
   },
   pendingAdminText: {
     ...Typography.captionSm,
-    color: '#B45309',
+    color: Colors.goldDark,
     fontWeight: '700',
   },
   submitOrderBtn: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(32, 40, 32, 0.6)',
+    backgroundColor: Colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,

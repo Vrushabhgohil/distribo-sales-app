@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
                   styles.trackingDot,
                   {
                     backgroundColor: locationTracker.isTracking
-                      ? '#22C55E'
+                      ? Colors.secondary
                       : Colors.gray300,
                   },
                 ]}

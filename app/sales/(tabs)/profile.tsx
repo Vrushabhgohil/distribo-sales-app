@@ -134,12 +134,12 @@ export default function ProfileScreen() {
           <View
             style={[
               styles.telemetryIconBox,
-              { backgroundColor: isTracking ? '#DCFCE7' : Colors.surfaceSecondary },
+              { backgroundColor: isTracking ? Colors.secondaryLight : Colors.surfaceSecondary },
             ]}
           >
             <Radio
               size={20}
-              color={isTracking ? '#15803D' : Colors.textTertiary}
+              color={isTracking ? Colors.secondary : Colors.textTertiary}
             />
           </View>
 
@@ -169,8 +169,8 @@ export default function ProfileScreen() {
             style={styles.menuItem}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#EFF6FF' }]}>
-                <ShoppingBag size={18} color="#2563EB" />
+              <View style={[styles.menuIcon, { backgroundColor: Colors.primaryLight }]}>
+                <ShoppingBag size={18} color={Colors.primary} />
               </View>
               <Text style={styles.menuLabel}>Product Master Catalogue</Text>
             </View>
@@ -185,8 +185,8 @@ export default function ProfileScreen() {
             style={styles.menuItem}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#F3EEFF' }]}>
-                <Bell size={18} color="#7C3AED" />
+              <View style={[styles.menuIcon, { backgroundColor: Colors.goldLight }]}>
+                <Bell size={18} color={Colors.goldDark} />
               </View>
               <Text style={styles.menuLabel}>Notifications & Admin Alerts</Text>
             </View>
@@ -201,8 +201,8 @@ export default function ProfileScreen() {
             style={styles.menuItem}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#DCFCE7' }]}>
-                <Map size={18} color="#15803D" />
+              <View style={[styles.menuIcon, { backgroundColor: Colors.secondaryLight }]}>
+                <Map size={18} color={Colors.secondary} />
               </View>
               <Text style={styles.menuLabel}>Live GPS & Beat Map</Text>
             </View>
@@ -217,8 +217,8 @@ export default function ProfileScreen() {
             style={styles.menuItem}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Settings size={18} color="#B45309" />
+              <View style={[styles.menuIcon, { backgroundColor: Colors.goldLight }]}>
+                <Settings size={18} color={Colors.goldDark} />
               </View>
               <Text style={styles.menuLabel}>Beat Settings & Cache Management</Text>
             </View>
@@ -233,8 +233,8 @@ export default function ProfileScreen() {
             style={styles.menuItem}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: '#F0FDF4' }]}>
-                <HelpCircle size={18} color={Colors.primaryDark} />
+              <View style={[styles.menuIcon, { backgroundColor: Colors.secondaryLight }]}>
+                <HelpCircle size={18} color={Colors.secondary} />
               </View>
               <Text style={styles.menuLabel}>Help & Support (FAQs & Guides)</Text>
             </View>
@@ -253,7 +253,7 @@ export default function ProfileScreen() {
         />
 
         <Text style={styles.versionText}>
-          Distribo Sales Mobile v1.0.0 • Connected to Central Hub
+          Motiba Sales Mobile v1.0.0 • Connected to Central Hub
         </Text>
       </ScrollView>
     </SafeAreaView>

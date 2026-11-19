@@ -40,14 +40,14 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles: Record<string, { container: ViewStyle; text: TextStyle; loaderColor: string }> = {
     primary: {
-      container: { backgroundColor: Colors.primaryDark, ...Shadows.sm },
+      container: { backgroundColor: Colors.primary, ...Shadows.sm },
       text: { color: Colors.white },
       loaderColor: Colors.white,
     },
     secondary: {
-      container: { backgroundColor: Colors.primaryLight, borderWidth: 1, borderColor: Colors.primary + '40' },
-      text: { color: Colors.primaryDark },
-      loaderColor: Colors.primaryDark,
+      container: { backgroundColor: Colors.goldLight, borderWidth: 1, borderColor: Colors.gold + '50' },
+      text: { color: Colors.goldDark, fontWeight: '700' },
+      loaderColor: Colors.goldDark,
     },
     outline: {
       container: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: Colors.border },
@@ -65,7 +65,7 @@ export const Button: React.FC<ButtonProps> = ({
       loaderColor: Colors.white,
     },
     success: {
-      container: { backgroundColor: Colors.success, ...Shadows.sm },
+      container: { backgroundColor: Colors.secondary, ...Shadows.sm },
       text: { color: Colors.white },
       loaderColor: Colors.white,
     },

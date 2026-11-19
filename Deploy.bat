@@ -1,11 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
-title Distribo Sales - Build and Deployment Utility
+title Motiba Sales - Build and Deployment Utility
 
 :MENU
 cls
 echo ========================================================================
-echo             DISTRIBO SALES MOBILE APP
+echo             MOTIBA SALES MOBILE APP
 echo                     BUILD AND DEPLOYMENT UTILITY
 echo ========================================================================
 echo.

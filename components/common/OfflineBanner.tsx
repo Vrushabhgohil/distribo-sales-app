@@ -37,8 +37,8 @@ export const SyncStatusBar: React.FC<{ isOffline?: boolean }> = ({ isOffline = f
     <View style={[styles.bar, isOffline ? styles.barOffline : styles.barOnline]}>
       {isOffline ? (
         <>
-          <WifiOff size={13} color="#991B1B" />
-          <Text style={[styles.text, { color: '#991B1B' }]}>
+          <WifiOff size={13} color={Colors.primary} />
+          <Text style={[styles.text, { color: Colors.primary }]}>
             Offline Mode: Orders & visits queued locally.
           </Text>
         </>
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   barOffline: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.primaryLight,
   },
   barOnline: {
     backgroundColor: Colors.surfaceSecondary,

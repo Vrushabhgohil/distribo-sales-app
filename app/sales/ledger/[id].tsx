@@ -136,13 +136,13 @@ export default function CustomerLedgerScreen() {
           <View
             style={[
               styles.txnIconWrap,
-              { backgroundColor: isDebit ? '#FEF3C7' : '#DCFCE7' },
+              { backgroundColor: isDebit ? Colors.goldLight : Colors.secondaryLight },
             ]}
           >
             {isDebit ? (
-              <ArrowUpRight size={18} color="#B45309" />
+              <ArrowUpRight size={18} color={Colors.goldDark} />
             ) : (
-              <ArrowDownRight size={18} color="#15803D" />
+              <ArrowDownRight size={18} color={Colors.secondary} />
             )}
           </View>
 
@@ -163,7 +163,7 @@ export default function CustomerLedgerScreen() {
             <Text
               style={[
                 styles.txnAmount,
-                { color: isDebit ? '#B45309' : '#15803D' },
+                { color: isDebit ? Colors.goldDark : Colors.secondary },
               ]}
             >
               {isDebit ? '+' : '-'}₹

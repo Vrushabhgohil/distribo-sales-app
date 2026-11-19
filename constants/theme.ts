@@ -1,94 +1,111 @@
 /**
- * Distribo Unified Design System
- * Inspired by professional FMCG/Food ordering UI kits
- * Complete visual language: colors, typography, spacing, shadows, radii
+ * Motiba Unified Design System
+ * Royal Maroon (#970F18), Heritage Gold (#D9A52E) & Organic Green (#28633B)
+ * Warm Ivory (#FFF8E9), Soft Wheat (#F1DDAF), Earthy Brown (#493027), Pure White (#FFFFFF), Soft Beige (#E9E0D2)
  */
 
 // ─── COLOR TOKENS ───────────────────────────────────────────────
 export const Colors = {
-  // Brand
-  primary: '#A8D83D',
-  primaryDark: '#294D32',
-  primaryLight: '#F1F8E8',
-  primaryMid: '#7CB342',
-  primaryTint: '#E8F5D6',
-  primarySoft: '#F6FCEB',
+  // Brand Colours
+  primary: '#970F18',         // Royal Maroon (Primary brand colour)
+  primaryDark: '#7A0A12',     // Deep Royal Maroon
+  primaryLight: '#FDF1F1',    // Light Royal Maroon Tint
+  primaryMid: '#B8141F',      // Medium Maroon
+  primaryTint: '#FCE8E9',     // Soft Maroon Tint
+  primarySoft: '#FFF5F5',     // Softest Maroon
 
-  // Surfaces
-  background: '#F7F8F5',
-  surface: '#FFFFFF',
-  surfaceSecondary: '#F2F5EE',
-  surfaceTertiary: '#FAFCF7',
-  card: '#FFFFFF',
-  cardElevated: '#FFFFFF',
-  overlay: 'rgba(32, 40, 32, 0.5)',
+  // Accent & Highlights
+  accent: '#D9A52E',          // Heritage Gold (Accent & Highlights)
+  gold: '#D9A52E',            // Heritage Gold
+  goldLight: '#FBF4E4',       // Soft Gold Highlight
+  goldDark: '#B8861E',        // Deep Heritage Gold
+  goldTint: '#F6E6C4',        // Wheat / Gold Tint
 
-  // Text
-  text: '#202820',
-  textPrimary: '#202820',
-  textSecondary: '#6B7266',
-  textTertiary: '#9BA396',
-  textLight: '#A4ABA1',
-  textInverse: '#FFFFFF',
-  textAccent: '#294D32',
+  // Secondary Brand Colour
+  secondary: '#28633B',       // Organic Green (Secondary brand colour)
+  secondaryLight: '#EBF3ED',  // Soft Organic Green Tint
+  secondaryDark: '#1E4B2D',   // Deep Forest Green
+  secondaryTint: '#DFEFE4',   // Fresh Green Tint
 
-  // Borders
-  border: '#E9EDE5',
-  borderLight: '#F1F4ED',
-  borderSubtle: '#F0F3ED',
-  borderFocus: '#A8D83D',
-  borderStrong: '#D0D6CA',
+  // Surfaces & Backgrounds
+  background: '#FFF8E9',      // Warm Ivory (Main page background)
+  surface: '#FFFFFF',         // Pure White (Cards and surfaces)
+  surfaceSecondary: '#FBF4E4',// Soft Wheat / Secondary background
+  surfaceTertiary: '#FFFDF8', // Pure Ivory Surface
+  softWheat: '#F1DDAF',       // Soft Wheat
+  warmIvory: '#FFF8E9',       // Warm Ivory
+  card: '#FFFFFF',            // Pure White Card
+  cardElevated: '#FFFFFF',    // Pure White Elevated
+  overlay: 'rgba(73, 48, 39, 0.5)', // Earthy Brown overlay
 
-  // Status
-  success: '#2E7D4F',
-  successLight: '#E8F5EE',
-  successBg: '#F0FAF4',
-  warning: '#C67E1A',
-  warningLight: '#FFF4E0',
-  warningBg: '#FFFBF0',
-  error: '#C43B3B',
-  errorLight: '#FDECEC',
-  errorBg: '#FEF5F5',
-  danger: '#EF4444',
-  dangerLight: '#FEE2E2',
-  info: '#2563EB',
-  infoLight: '#EFF6FF',
-  infoBg: '#F5F8FF',
+  // Typography
+  text: '#493027',            // Earthy Brown (Headings and text)
+  textPrimary: '#493027',     // Earthy Brown (Primary text)
+  textSecondary: '#795B50',   // Muted Earthy Brown
+  textTertiary: '#A3887E',    // Subtle Earthy Brown
+  textLight: '#BCA59C',       // Light Earthy Brown
+  textInverse: '#FFFFFF',     // Pure White on Maroon/Green
+  textAccent: '#970F18',      // Royal Maroon Accent Text
+  textGold: '#D9A52E',        // Heritage Gold Text
 
-  // Delivery-specific Status Indicators
-  statusAssigned: '#3B82F6',
-  statusInTransit: '#F59E0B',
-  statusDelivered: '#16A34A',
-  statusPartial: '#8B5CF6',
-  statusFailed: '#EF4444',
+  // Borders & Dividers
+  border: '#E9E0D2',          // Soft Beige (Borders and dividers)
+  borderLight: '#F3EDE3',     // Light Soft Beige
+  borderSubtle: '#F8F4ED',    // Very Subtle Beige
+  borderFocus: '#970F18',     // Royal Maroon Active Focus
+  borderStrong: '#D5C8B4',    // Strong Beige Divider
+  borderGold: '#D9A52E',      // Heritage Gold Border
 
-  // Neutrals
-  white: '#FFFFFF',
-  black: '#000000',
-  gray50: '#FAFAFA',
-  gray100: '#F3F4F1',
-  gray200: '#E5E7E2',
-  gray300: '#D1D5CC',
-  gray400: '#9CA39A',
-  gray500: '#6B7268',
-  gray600: '#4B5248',
-  gray700: '#374133',
-  gray800: '#1F2A1C',
-  gray900: '#111811',
+  // Status & Alerts
+  success: '#28633B',         // Organic Green (Success messages & positive indicators)
+  successLight: '#EBF3ED',    // Organic Green Tint
+  successBg: '#F5FAF6',       // Soft Green Background
+  warning: '#D9A52E',         // Heritage Gold (Warning / Attention)
+  warningLight: '#FDF6E2',    // Gold Tint
+  warningBg: '#FFFDF2',       // Light Gold Background
+  error: '#970F18',           // Royal Maroon (Error / Alert)
+  errorLight: '#FDF1F1',      // Soft Maroon Light
+  errorBg: '#FFF5F5',         // Soft Maroon Background
+  danger: '#970F18',          // Royal Maroon / Danger
+  dangerLight: '#FDF1F1',     // Light Danger
+  info: '#28633B',            // Organic Green / Trust Indicator
+  infoLight: '#EBF3ED',       // Light Green Info
+  infoBg: '#F5FAF6',          // Soft Info Background
 
-  // Accent Colors for metric cards
-  blue: '#2563EB',
-  blueLight: '#EFF6FF',
-  purple: '#7C3AED',
-  purpleLight: '#F3EEFF',
-  orange: '#EA580C',
-  orangeLight: '#FFF4ED',
-  teal: '#0D9488',
-  tealLight: '#F0FDFA',
-  rose: '#E11D48',
-  roseLight: '#FFF1F2',
-  amber: '#D97706',
-  amberLight: '#FFFBEB',
+  // Delivery & Order Status Indicators
+  statusAssigned: '#D9A52E',  // Heritage Gold (Assigned / In Queue)
+  statusInTransit: '#B8861E', // Deep Heritage Gold (In Transit)
+  statusDelivered: '#28633B', // Organic Green (Delivered / Completed)
+  statusPartial: '#970F18',   // Royal Maroon (Partially Delivered)
+  statusFailed: '#970F18',    // Royal Maroon (Failed / Rejected)
+
+  // Neutrals & Heritage Accents
+  white: '#FFFFFF',           // Pure White
+  black: '#1D130E',
+  gray50: '#FAF8F5',
+  gray100: '#F4EFE6',
+  gray200: '#E9E0D2',         // Soft Beige
+  gray300: '#D5C8B4',
+  gray400: '#A3887E',
+  gray500: '#795B50',
+  gray600: '#5C4137',
+  gray700: '#493027',         // Earthy Brown
+  gray800: '#332019',
+  gray900: '#1D130E',
+
+  // Heritage Metric Accents
+  blue: '#28633B',            // Organic Green
+  blueLight: '#EBF3ED',
+  purple: '#970F18',          // Royal Maroon
+  purpleLight: '#FDF1F1',
+  orange: '#D9A52E',          // Heritage Gold
+  orangeLight: '#FDF6E2',
+  teal: '#28633B',            // Organic Green
+  tealLight: '#EBF3ED',
+  rose: '#970F18',            // Royal Maroon
+  roseLight: '#FDF1F1',
+  amber: '#D9A52E',           // Heritage Gold
+  amberLight: '#FDF6E2',
 };
 
 // ─── TYPOGRAPHY ─────────────────────────────────────────────────
@@ -186,37 +203,37 @@ export const Shadows = {
     elevation: 0,
   },
   xs: {
-    shadowColor: '#1A2E1A',
+    shadowColor: '#493027',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
   sm: {
-    shadowColor: '#1A2E1A',
+    shadowColor: '#493027',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: '#1A2E1A',
+    shadowColor: '#493027',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
   lg: {
-    shadowColor: '#1A2E1A',
+    shadowColor: '#493027',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.09,
+    shadowOpacity: 0.10,
     shadowRadius: 14,
     elevation: 5,
   },
   xl: {
-    shadowColor: '#1A2E1A',
+    shadowColor: '#493027',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.14,
     shadowRadius: 20,
     elevation: 8,
   },

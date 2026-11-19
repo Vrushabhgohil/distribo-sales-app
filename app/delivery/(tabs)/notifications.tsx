@@ -208,10 +208,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   itemCardUnread: {
-    backgroundColor: '#FAFCF7',
-    borderColor: '#D7EBB6',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryTint,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.primaryDark,
+    borderLeftColor: Colors.primary,
   },
   iconCircle: {
     width: 36,

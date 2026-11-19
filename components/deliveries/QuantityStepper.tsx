@@ -248,14 +248,14 @@ const styles = StyleSheet.create({
   },
   partialNote: {
     marginTop: Spacing.sm,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     borderRadius: BorderRadius.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
   },
   partialNoteText: {
     ...Typography.tiny,
-    color: '#B45309',
+    color: Colors.goldDark,
     fontWeight: '600',
   },
 });

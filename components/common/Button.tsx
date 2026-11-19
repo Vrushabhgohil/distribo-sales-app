@@ -142,21 +142,24 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   primaryText: {
-    color: Colors.primaryDark,
+    color: Colors.white,
     fontWeight: '700',
   },
   dark: {
     backgroundColor: Colors.primaryDark,
   },
   darkText: {
-    color: '#FFFFFF',
+    color: Colors.white,
     fontWeight: '700',
   },
   secondary: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.goldLight,
+    borderWidth: 1,
+    borderColor: Colors.gold + '50',
   },
   secondaryText: {
-    color: Colors.primaryDark,
+    color: Colors.goldDark,
+    fontWeight: '700',
   },
   outline: {
     backgroundColor: 'transparent',
@@ -170,7 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.danger,
   },
   dangerText: {
-    color: '#FFFFFF',
+    color: Colors.white,
   },
   sizeSm: {
     paddingVertical: 8,

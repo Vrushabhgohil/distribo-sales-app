@@ -23,12 +23,12 @@ export default function RootIndexScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('@/assets/images/distribo-full-logo.png')}
+        source={require('@/assets/images/motiba-full-logo.png')}
         style={styles.logo}
         resizeMode="contain"
       />
       <ActivityIndicator size="large" color={Colors.primaryDark} style={styles.spinner} />
-      <Text style={styles.loadingText}>Initializing Distribo...</Text>
+      <Text style={styles.loadingText}>Initializing Motiba...</Text>
     </View>
   );
 }
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 200,
-    height: 60,
+    height: 120,
     marginBottom: Spacing.xl,
   },
   spinner: {

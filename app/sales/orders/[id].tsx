@@ -189,7 +189,7 @@ export default function OrderDetailsScreen() {
           {/* Workflow Status Notice */}
           {isPending && (
             <View style={styles.pendingNotice}>
-              <Clock size={16} color="#B45309" />
+              <Clock size={16} color={Colors.goldDark} />
               <View style={{ marginLeft: 10, flex: 1 }}>
                 <Text style={styles.pendingTitle}>Pending Admin Approval</Text>
                 <Text style={styles.pendingDesc}>
@@ -201,7 +201,7 @@ export default function OrderDetailsScreen() {
 
           {isConfirmed && (
             <View style={styles.confirmedNotice}>
-              <CheckCircle2 size={16} color="#15803D" />
+              <CheckCircle2 size={16} color={Colors.secondary} />
               <View style={{ marginLeft: 10, flex: 1 }}>
                 <Text style={styles.confirmedTitle}>Approved by Central Admin</Text>
                 <Text style={styles.confirmedDesc}>
@@ -225,7 +225,7 @@ export default function OrderDetailsScreen() {
 
           {isDelivered && (
             <View style={styles.deliveredNotice}>
-              <CheckCircle2 size={16} color="#15803D" />
+              <CheckCircle2 size={16} color={Colors.secondary} />
               <View style={{ marginLeft: 10, flex: 1 }}>
                 <Text style={styles.deliveredTitle}>Order Delivered</Text>
                 <Text style={styles.deliveredDesc}>
@@ -480,39 +480,39 @@ const styles = StyleSheet.create({
   pendingNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     padding: 12,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.goldTint,
   },
   pendingTitle: {
     ...Typography.labelSm,
-    color: '#B45309',
+    color: Colors.goldDark,
     fontWeight: '700',
   },
   pendingDesc: {
     ...Typography.captionSm,
-    color: '#92400E',
+    color: Colors.goldDark,
     marginTop: 2,
   },
   confirmedNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     padding: 12,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: Colors.secondaryTint,
   },
   confirmedTitle: {
     ...Typography.labelSm,
-    color: '#15803D',
+    color: Colors.secondary,
     fontWeight: '700',
   },
   confirmedDesc: {
     ...Typography.captionSm,
-    color: '#166534',
+    color: Colors.secondary,
     marginTop: 2,
   },
   rejectedNotice: {
@@ -537,20 +537,20 @@ const styles = StyleSheet.create({
   deliveredNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryLight,
     padding: 12,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: Colors.secondaryTint,
   },
   deliveredTitle: {
     ...Typography.labelSm,
-    color: '#15803D',
+    color: Colors.secondary,
     fontWeight: '700',
   },
   deliveredDesc: {
     ...Typography.captionSm,
-    color: '#166534',
+    color: Colors.secondary,
     marginTop: 2,
   },
   sectionHeading: {

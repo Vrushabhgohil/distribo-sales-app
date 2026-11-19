@@ -98,7 +98,7 @@ export default function LoginScreen() {
 
             <View style={styles.verifiedBadge}>
               <ShieldCheck size={12} color={Colors.primaryDark} />
-              <Text style={styles.verifiedText}>DISTRIBO FMCG SUITE</Text>
+              <Text style={styles.verifiedText}>MOTIBA FMCG SUITE</Text>
             </View>
 
             <Text style={styles.appTitle}>Unified Portal Sign In</Text>

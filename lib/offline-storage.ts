@@ -2,15 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product, Store, CartItem, DeliveryAssignment, Order, OfflineQueueItem } from '@/types';
 
 const KEYS = {
-  STORES_CACHE: '@distribo_stores_cache',
-  PRODUCTS_CACHE: '@distribo_products_cache',
-  ORDER_DRAFTS: '@distribo_order_drafts',
-  LAST_SYNC_TIME: '@distribo_last_sync_time',
-  PENDING_LOCATIONS: '@distribo_pending_locations',
-  DELIVERIES: '@distribo_cached_deliveries',
-  ORDERS: '@distribo_cached_orders',
-  OFFLINE_QUEUE: '@distribo_delivery_offline_queue',
-  PROFILE: '@distribo_delivery_profile',
+  STORES_CACHE: '@motiba_stores_cache',
+  PRODUCTS_CACHE: '@motiba_products_cache',
+  ORDER_DRAFTS: '@motiba_order_drafts',
+  LAST_SYNC_TIME: '@motiba_last_sync_time',
+  PENDING_LOCATIONS: '@motiba_pending_locations',
+  DELIVERIES: '@motiba_cached_deliveries',
+  ORDERS: '@motiba_cached_orders',
+  OFFLINE_QUEUE: '@motiba_delivery_offline_queue',
+  PROFILE: '@motiba_delivery_profile',
 };
 
 export interface LocalOrderDraft {

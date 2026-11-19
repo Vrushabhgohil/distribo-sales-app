@@ -58,7 +58,7 @@ export const StoreCard: React.FC<StoreCardProps> = ({
         <View style={styles.divider} />
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Status</Text>
-          <View style={[styles.statusDot, { backgroundColor: store.status === 'active' ? '#22C55E' : Colors.gray400 }]} />
+          <View style={[styles.statusDot, { backgroundColor: store.status === 'active' ? Colors.secondary : Colors.gray400 }]} />
         </View>
       </View>
 

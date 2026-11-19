@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Spacing.xl,
     borderWidth: 2,
-    borderColor: '#86EFAC',
+    borderColor: Colors.secondary,
   },
   partialIconCircle: {
-    backgroundColor: '#FAF5FF',
-    borderColor: '#D8B4FE',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryTint,
   },
   title: {
     ...Typography.heading1,
@@ -191,13 +191,13 @@ const styles = StyleSheet.create({
   },
   offlineNotice: {
     marginTop: Spacing.md,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.goldLight,
     borderRadius: BorderRadius.sm,
     padding: Spacing.sm,
   },
   offlineNoticeText: {
     ...Typography.tiny,
-    color: '#92400E',
+    color: Colors.goldDark,
     fontWeight: '600',
     textAlign: 'center',
   },

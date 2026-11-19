@@ -16,54 +16,54 @@ export const Badge: React.FC<BadgeProps> = ({ status, label, style }) => {
       case 'ready_for_delivery':
       case 'processing':
         return {
-          bg: '#EFF6FF',
-          text: '#2563EB',
-          border: '#BFDBFE',
+          bg: Colors.goldLight,
+          text: Colors.goldDark,
+          border: Colors.goldTint,
           display: label || 'Pending Pickup',
         };
       case 'in_transit':
       case 'out_for_delivery':
         return {
-          bg: '#FEF3C7',
-          text: '#D97706',
-          border: '#FDE68A',
+          bg: Colors.goldLight,
+          text: Colors.goldDark,
+          border: Colors.goldTint,
           display: label || 'Out For Delivery',
         };
       case 'delivered':
         return {
-          bg: '#DCFCE7',
-          text: '#15803D',
-          border: '#BBF7D0',
+          bg: Colors.secondaryLight,
+          text: Colors.secondary,
+          border: Colors.secondaryTint,
           display: label || 'Delivered',
         };
       case 'partially_delivered':
         return {
-          bg: '#F3E8FF',
-          text: '#7E22CE',
-          border: '#E9D5FF',
+          bg: Colors.primaryLight,
+          text: Colors.primary,
+          border: Colors.primaryTint,
           display: label || 'Partially Delivered',
         };
       case 'rejected':
       case 'failed':
       case 'cancelled':
         return {
-          bg: '#FEE2E2',
-          text: '#B91C1C',
-          border: '#FECACA',
+          bg: Colors.primaryLight,
+          text: Colors.primary,
+          border: Colors.primaryTint,
           display: label || 'Failed / Rejected',
         };
       case 'confirmed':
         return {
-          bg: Colors.primaryLight,
-          text: Colors.primaryDark,
-          border: '#D9F2A6',
+          bg: Colors.secondaryLight,
+          text: Colors.secondary,
+          border: Colors.secondaryTint,
           display: label || 'Approved / Confirmed',
         };
       default:
         return {
-          bg: '#F3F4F6',
-          text: '#4B5563',
-          border: '#E5E7EB',
+          bg: Colors.surfaceSecondary,
+          text: Colors.textSecondary,
+          border: Colors.border,
           display: label || status,
         };
     }

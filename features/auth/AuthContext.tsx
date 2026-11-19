@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
-import { SalesPersonProfile, DeliveryPersonProfile, UserRole } from '@/types';
+import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   userRole: UserRole | null;
@@ -25,13 +25,13 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AUTH_STORAGE_KEY = '@distribo_auth_session';
-const USER_ROLE_KEY = '@distribo_user_role';
-const REMEMBER_ME_KEY = '@distribo_remember_me';
+const AUTH_STORAGE_KEY = '@motiba_auth_session';
+const USER_ROLE_KEY = '@motiba_user_role';
+const REMEMBER_ME_KEY = '@motiba_remember_me';
 
 // Backward compatibility keys
-const SALES_STORAGE_KEY = '@distribo_salesperson_session';
-const DELIVERY_STORAGE_KEY = '@distribo_delivery_session';
+const SALES_STORAGE_KEY = '@motiba_salesperson_session';
+const DELIVERY_STORAGE_KEY = '@motiba_delivery_session';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -191,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       USER_ROLE_KEY,
       SALES_STORAGE_KEY,
       DELIVERY_STORAGE_KEY,
-      '@distribo_delivery_profile',
+      '@motiba_delivery_profile',
     ]);
   };
 
@@ -225,8 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const candidateTargetEmail = salesMatch
         ? salesMatch.email
         : deliveryMatch
-        ? deliveryMatch.email
-        : cleanId;
+          ? deliveryMatch.email
+          : cleanId;
 
       // 3. Attempt Supabase Auth login
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

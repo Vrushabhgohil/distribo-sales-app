@@ -80,12 +80,12 @@ export default function LocationScreen() {
             <View
               style={[
                 styles.radarCircle,
-                { backgroundColor: isTracking ? '#DCFCE7' : Colors.surfaceSecondary },
+                { backgroundColor: isTracking ? Colors.secondaryLight : Colors.surfaceSecondary },
               ]}
             >
               <Radio
                 size={26}
-                color={isTracking ? '#15803D' : Colors.textTertiary}
+                color={isTracking ? Colors.secondary : Colors.textTertiary}
               />
             </View>
 

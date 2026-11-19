@@ -7,7 +7,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { locationService } from '@/services/location-service';
 
-export const BACKGROUND_LOCATION_TASK = 'DISTRIBO_BACKGROUND_LOCATION_TASK';
+export const BACKGROUND_LOCATION_TASK = 'MOTIBA_BACKGROUND_LOCATION_TASK';
 
 interface LocationTrackerContextType {
   isTracking: boolean;
@@ -44,8 +44,8 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: any) =>
     if (locations && locations.length > 0) {
       const loc = locations[locations.length - 1];
       try {
-        const userRole = await AsyncStorage.getItem('@distribo_user_role');
-        const sessionStr = await AsyncStorage.getItem('@distribo_auth_session');
+        const userRole = await AsyncStorage.getItem('@motiba_user_role');
+        const sessionStr = await AsyncStorage.getItem('@motiba_auth_session');
 
         if (sessionStr) {
           const profile = JSON.parse(sessionStr);
@@ -265,9 +265,9 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
               distanceInterval: 50,
               deferredUpdatesInterval: updateIntervalSec * 1000,
               foregroundService: {
-                notificationTitle: 'Distribo Active Service',
+                notificationTitle: 'Motiba Active Service',
                 notificationBody: 'Recording route and visit coordinates during work hours.',
-                notificationColor: '#16A34A',
+                notificationColor: '#970F18',
               },
             });
           } catch (taskErr) {

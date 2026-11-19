@@ -266,7 +266,7 @@ export default function SignUpScreen() {
 
           {/* Already registered */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already registered with Distribo?</Text>
+            <Text style={styles.footerText}>Already registered with Motiba?</Text>
             <TouchableOpacity
               onPress={() => router.push('/(auth)/login')}
               activeOpacity={0.7}

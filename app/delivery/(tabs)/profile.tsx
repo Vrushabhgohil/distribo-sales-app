@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to log out of the Distribo Delivery portal?',
+      'Are you sure you want to log out of the Motiba Delivery portal?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -211,7 +211,7 @@ export default function ProfileScreen() {
             onPress={() => {
               Alert.alert(
                 'Security & Privacy',
-                'Distribo Delivery securely synchronizes warehouse orders and drop logs directly to Aarvi Enterprise cloud servers under role-based access control.'
+                'Motiba Delivery securely synchronizes warehouse orders and drop logs directly to Aarvi Enterprise cloud servers under role-based access control.'
               );
             }}
             activeOpacity={0.7}
@@ -235,7 +235,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Text style={styles.versionText}>
-          Distribo Delivery Pilot App • v1.0.0 (Build 58)
+          Motiba Delivery Pilot App • v1.0.0 (Build 58)
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -441,9 +441,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: Colors.primaryTint,
     borderRadius: BorderRadius.md,
     paddingVertical: 14,
     marginBottom: Spacing.lg,

@@ -181,7 +181,7 @@ export default function HelpScreen() {
   };
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:support@aarvifmcg.com?subject=Distribo%20Sales%20Help%20Request');
+    Linking.openURL('mailto:support@aarvifmcg.com?subject=Motiba%20Sales%20Help%20Request');
   };
 
   const handleReportIssue = () => {
@@ -314,8 +314,8 @@ export default function HelpScreen() {
             onPress={handleCallSupport}
             style={styles.contactItem}
           >
-            <View style={[styles.contactIconBox, { backgroundColor: '#DCFCE7' }]}>
-              <Phone size={18} color="#15803D" />
+            <View style={[styles.contactIconBox, { backgroundColor: Colors.secondaryLight }]}>
+              <Phone size={18} color={Colors.secondary} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.contactLabel}>Helpline Phone</Text>
@@ -331,8 +331,8 @@ export default function HelpScreen() {
             onPress={handleEmailSupport}
             style={styles.contactItem}
           >
-            <View style={[styles.contactIconBox, { backgroundColor: '#EFF6FF' }]}>
-              <Mail size={18} color="#2563EB" />
+            <View style={[styles.contactIconBox, { backgroundColor: Colors.goldLight }]}>
+              <Mail size={18} color={Colors.goldDark} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.contactLabel}>Support Email</Text>
