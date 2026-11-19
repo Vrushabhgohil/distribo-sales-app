@@ -22,6 +22,7 @@ import {
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -36,20 +37,32 @@ export default function ProfileScreen() {
   const { isTracking, currentCoords, trackingStatus } = useLocationTracker();
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out of Sales Beat',
-      'Are you sure you want to conclude your current field sales session?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut();
+    const executeLogout = async () => {
+      try {
+        await signOut();
+      } finally {
+        router.replace('/(auth)/login');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to conclude your current sales beat session?')) {
+        void executeLogout();
+      }
+    } else {
+      Alert.alert(
+        'Sign Out of Sales Beat',
+        'Are you sure you want to conclude your current field sales session?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: executeLogout,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (

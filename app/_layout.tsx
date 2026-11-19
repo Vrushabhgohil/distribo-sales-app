@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
 import { LocationTrackerProvider } from '@/features/location/LocationTrackerContext';
 import { OfflineSyncProvider } from '@/features/offline/OfflineSyncContext';
 import { Colors } from '@/constants/theme';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 
 function RouteGuard() {
   const { userRole, loading } = useAuth();
@@ -19,15 +19,22 @@ function RouteGuard() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inSalesGroup = segments[0] === 'sales';
+    const inDeliveryGroup = segments[0] === 'delivery';
 
-    if (!userRole && !inAuthGroup) {
-      // Redirect unauthenticated users to login
-      router.replace('/(auth)/login');
-    } else if (userRole && inAuthGroup) {
-      // Redirect authenticated users to their portal
-      if (userRole === 'sales_person') {
+    if (!userRole) {
+      // Strictly redirect unauthenticated users to login
+      if (!inAuthGroup) {
+        router.replace('/(auth)/login');
+      }
+    } else if (userRole === 'sales_person') {
+      // Sales officers belong strictly in /sales
+      if (inAuthGroup || inDeliveryGroup) {
         router.replace('/sales' as any);
-      } else if (userRole === 'delivery_person') {
+      }
+    } else if (userRole === 'delivery_person') {
+      // Delivery pilots belong strictly in /delivery
+      if (inAuthGroup || inSalesGroup) {
         router.replace('/delivery' as any);
       }
     }
@@ -45,7 +52,9 @@ function RouteGuard() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: {
+          backgroundColor: Platform.OS === 'web' ? 'transparent' : Colors.background,
+        },
         animation: 'slide_from_right',
       }}
     >

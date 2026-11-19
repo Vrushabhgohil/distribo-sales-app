@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -34,21 +35,32 @@ export default function ProfileScreen() {
   const { isOnline, pendingCount, triggerSync, isSyncing } = useOfflineSync();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to log out of the Motiba Delivery portal?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut();
-            router.replace('/(auth)/login');
+    const executeSignOut = async () => {
+      try {
+        await signOut();
+      } finally {
+        router.replace('/(auth)/login');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to log out of the Motiba Delivery portal?')) {
+        void executeSignOut();
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to log out of the Motiba Delivery portal?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: executeSignOut,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const getInitials = (name?: string) => {

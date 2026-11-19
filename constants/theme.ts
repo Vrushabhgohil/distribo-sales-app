@@ -28,12 +28,12 @@ export const Colors = {
   secondaryTint: '#DFEFE4',   // Fresh Green Tint
 
   // Surfaces & Backgrounds
-  background: '#FFF8E9',      // Warm Ivory (Main page background)
+  background: '#FAF7F2',      // Smoky Pearl Base (Matching Admin Panel)
   surface: '#FFFFFF',         // Pure White (Cards and surfaces)
-  surfaceSecondary: '#FBF4E4',// Soft Wheat / Secondary background
+  surfaceSecondary: '#F8F4ED',// Soft Pearl / Secondary background
   surfaceTertiary: '#FFFDF8', // Pure Ivory Surface
-  softWheat: '#F1DDAF',       // Soft Wheat
-  warmIvory: '#FFF8E9',       // Warm Ivory
+  softWheat: '#F1DDAF',       // Soft Wheat Accent
+  warmIvory: '#FAF7F2',       // Smoky Warm Ivory
   card: '#FFFFFF',            // Pure White Card
   cardElevated: '#FFFFFF',    // Pure White Elevated
   overlay: 'rgba(73, 48, 39, 0.5)', // Earthy Brown overlay

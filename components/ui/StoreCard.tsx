@@ -66,14 +66,14 @@ export const StoreCard: React.FC<StoreCardProps> = ({
       <View style={styles.actionsRow}>
         {onVisitPress && (
           <TouchableOpacity activeOpacity={0.7} onPress={onVisitPress} style={styles.actionBtn}>
-            <Navigation size={13} color={Colors.primaryDark} />
+            <Navigation size={14} color={Colors.primary} />
             <Text style={styles.actionBtnText}>Check In</Text>
           </TouchableOpacity>
         )}
         {onOrderPress && (
-          <TouchableOpacity activeOpacity={0.7} onPress={onOrderPress} style={[styles.actionBtn, styles.actionBtnPrimary]}>
-            <ShoppingBag size={13} color={Colors.white} />
-            <Text style={[styles.actionBtnText, styles.actionBtnTextPrimary]}>Order</Text>
+          <TouchableOpacity activeOpacity={0.8} onPress={onOrderPress} style={styles.actionBtnPrimary}>
+            <ShoppingBag size={14} color="#FFFFFF" />
+            <Text style={styles.actionBtnPrimaryText}>Order</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 12,
   },
   actionBtn: {
@@ -174,18 +174,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: Colors.primaryLight,
-    paddingVertical: 9,
+    backgroundColor: Colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 10,
     borderRadius: Radius.md,
+    minHeight: 38,
   },
   actionBtnPrimary: {
-    backgroundColor: Colors.primaryDark,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    minHeight: 38,
+    ...Shadows.xs,
   },
   actionBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.textPrimary,
+    fontWeight: '700',
   },
-  actionBtnTextPrimary: {
-    color: Colors.white,
+  actionBtnPrimaryText: {
+    ...Typography.buttonSm,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

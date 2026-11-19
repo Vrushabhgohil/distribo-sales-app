@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { queryClient } from '@/lib/query-client';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -186,13 +187,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearAllSessionData = async () => {
-    await AsyncStorage.multiRemove([
-      AUTH_STORAGE_KEY,
-      USER_ROLE_KEY,
-      SALES_STORAGE_KEY,
-      DELIVERY_STORAGE_KEY,
-      '@motiba_delivery_profile',
-    ]);
+    try {
+      await AsyncStorage.multiRemove([
+        AUTH_STORAGE_KEY,
+        USER_ROLE_KEY,
+        SALES_STORAGE_KEY,
+        DELIVERY_STORAGE_KEY,
+        REMEMBER_ME_KEY,
+        '@motiba_delivery_profile',
+        '@motiba_sales_profile',
+      ]);
+    } catch (e) {
+      console.warn('Error clearing auth storage:', e);
+    }
   };
 
   // Unified Sign In with Automatic Role Detection
@@ -503,6 +510,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Supabase sign-out error:', err);
     } finally {
       await clearAllSessionData();
+      try {
+        queryClient.clear();
+      } catch (e) {
+        console.warn('Error clearing query cache:', e);
+      }
       setUserRole(null);
       setSalesperson(null);
       setDeliveryPerson(null);
