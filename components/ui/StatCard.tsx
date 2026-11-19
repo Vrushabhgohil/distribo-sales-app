@@ -45,11 +45,11 @@ export const StatCard: React.FC<StatCardProps> = ({
         <Text style={[styles.value, isHighlight && styles.highlightValue]} numberOfLines={1}>
           {value}
         </Text>
-        <Text style={styles.label} numberOfLines={1}>
+        <Text style={[styles.label, isHighlight && styles.highlightLabel]} numberOfLines={1}>
           {label}
         </Text>
         {subtitle && !isCompact && (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={[styles.subtitle, isHighlight && styles.highlightSubtitle]} numberOfLines={1}>
             {subtitle}
           </Text>
         )}
@@ -114,10 +114,17 @@ const styles = StyleSheet.create({
     ...Typography.labelSm,
     color: Colors.textSecondary,
   },
+  highlightLabel: {
+    color: '#FFF8E9',
+    opacity: 0.95,
+  },
   subtitle: {
     ...Typography.captionMd,
     color: Colors.textTertiary,
     marginTop: 2,
+  },
+  highlightSubtitle: {
+    color: Colors.gold,
   },
   trendBadge: {
     paddingVertical: 2,

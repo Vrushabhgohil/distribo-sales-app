@@ -1,30 +1,30 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Bell,
-  CheckCheck,
-  ShoppingBag,
-  Truck,
-  Package,
-  CalendarClock,
-  Info,
-  ArrowLeft,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { Header } from '@/components/common/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { dataService } from '@/services/data-service';
 import { NotificationItem } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  Bell,
+  CalendarClock,
+  CheckCheck,
+  Info,
+  Package,
+  ShoppingBag,
+  Truck,
+} from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationsScreen() {
   const router = useRouter();

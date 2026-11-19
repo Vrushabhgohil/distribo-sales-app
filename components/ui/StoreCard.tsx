@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MapPin, Phone, ChevronRight, ShoppingBag, Navigation } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Typography, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { Store } from '@/types';
+import { ChevronRight, MapPin, Navigation, ShoppingBag } from 'lucide-react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface StoreCardProps {
   store: Store;

@@ -1,34 +1,23 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import {
-  Navigation,
-  MapPin,
-  Clock,
-  Radio,
-  Battery,
-  ShieldCheck,
-  RefreshCw,
-  Compass,
-  AlertCircle,
-  ArrowLeft,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/common/Header';
 import { SalesMap } from '@/components/map/SalesMap';
+import { Button } from '@/components/ui/Button';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useLocationTracker } from '@/features/location/LocationTrackerContext';
+import { useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  Radio
+} from 'lucide-react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const INTERVAL_OPTIONS = [
   { label: '30 sec', value: 30 },
@@ -97,8 +86,8 @@ export default function LocationScreen() {
                 {isTracking
                   ? 'Your visit coordinates and route updates are syncing automatically.'
                   : permissionDenied
-                  ? 'Location permission is required to verify store visits and beat coverage.'
-                  : 'Connecting to device GPS satellites...'}
+                    ? 'Location permission is required to verify store visits and beat coverage.'
+                    : 'Connecting to device GPS satellites...'}
               </Text>
             </View>
           </View>

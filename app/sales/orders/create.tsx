@@ -1,40 +1,35 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Modal,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Store as StoreIcon,
-  ShoppingBag,
-  Plus,
-  Minus,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  ShieldAlert,
-  ArrowLeft,
-  ArrowRight,
-  Package,
-  CreditCard,
-  Sparkles,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
+import { Header } from '@/components/common/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Header } from '@/components/common/Header';
 import { SearchBar } from '@/components/ui/SearchBar';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
-import { Product, Store, CartItem } from '@/types';
+import { CartItem } from '@/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Store as StoreIcon,
+  Trash2
+} from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateOrderScreen() {
   const router = useRouter();

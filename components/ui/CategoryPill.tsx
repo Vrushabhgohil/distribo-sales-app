@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   countActive: {
-    color: Colors.primary,
+    color: Colors.gold,
   },
   countInactive: {
     color: Colors.textTertiary,

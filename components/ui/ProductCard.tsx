@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   discountText: {
     ...Typography.captionSm,
-    color: Colors.primaryDark,
+    color: Colors.white,
     fontWeight: '800',
   },
   addBtn: {

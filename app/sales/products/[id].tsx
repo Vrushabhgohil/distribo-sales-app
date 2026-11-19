@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   discountBadgeText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.white,
   },
   infoCard: {
     backgroundColor: Colors.surface,

@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     ...Typography.captionSm,
     fontSize: 9,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.white,
   },
   filterSection: {
     paddingHorizontal: 20,

@@ -318,7 +318,7 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.heroIconWrap}>
-              <TrendingUp size={24} color={Colors.primary} />
+              <TrendingUp size={24} color={Colors.gold} />
             </View>
           </View>
 
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
   },
   heroOverline: {
     ...Typography.captionSm,
-    color: Colors.primary,
+    color: Colors.gold,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -821,13 +821,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(217, 165, 46, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(217, 165, 46, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroDivider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     marginVertical: 14,
   },
   heroStatsRow: {
@@ -845,14 +847,16 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     ...Typography.captionSm,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#FFF8E9',
+    opacity: 0.95,
     marginTop: 2,
     textAlign: 'center',
+    fontWeight: '600',
   },
   heroStatDivider: {
     width: 1,
     height: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   metricGrid: {
     flexDirection: 'row',

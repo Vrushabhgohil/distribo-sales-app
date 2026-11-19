@@ -1,7 +1,7 @@
+import { Colors, Radius, Typography } from '@/constants/theme';
+import { ExternalLink, MapPin, Navigation } from 'lucide-react-native';
 import React from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Linking } from 'react-native';
-import { MapPin, Navigation, ExternalLink } from 'lucide-react-native';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface MapMarker {
   latitude: number;

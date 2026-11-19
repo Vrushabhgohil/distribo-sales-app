@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Repeat,
-  Store as StoreIcon,
-  Plus,
-  Minus,
-  Trash2,
-  Clock,
-  ArrowLeft,
-  CheckCircle2,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/common/Header';
+import { Button } from '@/components/ui/Button';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { CartItem } from '@/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  Clock,
+  Minus,
+  Plus,
+  Repeat,
+  Store as StoreIcon,
+  Trash2
+} from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ReorderScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();

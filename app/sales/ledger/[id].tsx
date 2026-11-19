@@ -1,39 +1,34 @@
-import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Header } from '@/components/common/Header';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Input } from '@/components/ui/Input';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
+import { useAuth } from '@/features/auth/AuthContext';
+import { dataService } from '@/services/data-service';
+import { LedgerTransaction } from '@/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowDownRight,
-  ArrowUpRight,
-  Plus,
-  Calendar,
-  X,
-  CreditCard,
-  CheckCircle2,
   ArrowLeft,
-  DollarSign,
-  TrendingUp,
+  ArrowUpRight,
+  CreditCard,
+  Plus,
+  X
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Header } from '@/components/common/Header';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { dataService } from '@/services/data-service';
-import { useAuth } from '@/features/auth/AuthContext';
-import { LedgerTransaction } from '@/types';
+import { useMemo, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PAYMENT_MODES = ['Cash', 'UPI / QR', 'Cheque', 'Bank Transfer'];
 
@@ -383,7 +378,7 @@ const styles = StyleSheet.create({
   },
   heroOverline: {
     ...Typography.captionSm,
-    color: Colors.primary,
+    color: Colors.gold,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -394,7 +389,9 @@ const styles = StyleSheet.create({
   },
   creditLimitText: {
     ...Typography.captionSm,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#FFF8E9',
+    opacity: 0.95,
+    fontWeight: '500',
     marginTop: 2,
   },
   filterRow: {

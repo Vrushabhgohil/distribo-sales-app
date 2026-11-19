@@ -1,14 +1,14 @@
+import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { OrderItem } from '@/types';
+import { CheckCircle, Minus, Plus } from 'lucide-react-native';
 import React from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
+  Text,
   TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Plus, Minus, CheckCircle } from 'lucide-react-native';
-import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { OrderItem } from '@/types';
 
 interface QuantityStepperProps {
   item: OrderItem;

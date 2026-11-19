@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   },
   timerOverline: {
     ...Typography.captionSm,
-    color: Colors.primary,
+    color: Colors.gold,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -460,7 +460,9 @@ const styles = StyleSheet.create({
   },
   timerStartedAt: {
     ...Typography.captionSm,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#FFF8E9',
+    opacity: 0.95,
+    fontWeight: '500',
   },
   orderPromptCard: {
     flexDirection: 'row',

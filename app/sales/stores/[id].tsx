@@ -1,41 +1,34 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  RefreshControl,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Header } from '@/components/common/Header';
+import { SalesMap } from '@/components/map/SalesMap';
+import { Button } from '@/components/ui/Button';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
+import { useAuth } from '@/features/auth/AuthContext';
+import { dataService } from '@/services/data-service';
 import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  Phone,
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
   Mail,
   MapPin,
-  Calendar,
-  CreditCard,
-  ShoppingBag,
-  Clock,
-  PlusCircle,
-  BookOpen,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  ArrowLeft,
   Navigation,
-  FileSpreadsheet,
+  Phone,
+  ShieldCheck,
+  ShoppingBag
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Header } from '@/components/common/Header';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { SalesMap } from '@/components/map/SalesMap';
-import { dataService } from '@/services/data-service';
-import { useAuth } from '@/features/auth/AuthContext';
+import { useState } from 'react';
+import {
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function StoreDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
