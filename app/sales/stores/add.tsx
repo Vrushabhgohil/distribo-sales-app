@@ -6,9 +6,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -345,7 +345,7 @@ export default function AddStoreScreen() {
                 disabled={fetchingGps}
                 style={styles.gpsPinBtn}
               >
-                <RefreshCw size={14} color={Colors.primaryDark} />
+                <RefreshCw size={14} color={Colors.primary} />
                 <Text style={styles.gpsPinText}>
                   {fetchingGps ? 'Locating...' : 'Re-capture'}
                 </Text>
@@ -452,8 +452,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   typeChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   typeChipText: {
     ...Typography.captionSm,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   },
   gpsPinText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   submitBtn: {
     marginTop: 4,

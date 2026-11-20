@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
-  Alert,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -130,7 +130,7 @@ export default function WarehousePickupScreen() {
         <View style={styles.warehouseCard}>
           <View style={styles.warehouseTopRow}>
             <View style={styles.warehouseIconWrap}>
-              <WarehouseIcon size={24} color={Colors.primaryDark} />
+              <WarehouseIcon size={24} color={Colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.warehouseLabel}>ORIGIN GODOWN</Text>
@@ -244,7 +244,7 @@ export default function WarehousePickupScreen() {
           loading={submitting}
           size="lg"
           variant="primary"
-          icon={<CheckCircle2 size={18} color={Colors.primaryDark} />}
+          icon={<CheckCircle2 size={18} color="#FFF" />}
         />
       </View>
     </SafeAreaView>
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   warehouseCode: {
     ...Typography.caption,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontFamily: 'monospace',
     fontWeight: '600',
   },
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   },
   totalUnitsText: {
     ...Typography.captionBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   manifestGrid: {
     flexDirection: 'row',
@@ -405,12 +405,12 @@ const styles = StyleSheet.create({
   qtyLabel: {
     ...Typography.tiny,
     fontSize: 8,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
   qtyNumber: {
     ...Typography.heading3,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 16,
   },
   notesInput: {

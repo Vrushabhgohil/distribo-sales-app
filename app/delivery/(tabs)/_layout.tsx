@@ -8,13 +8,17 @@ import {
   Bell,
   User,
 } from 'lucide-react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, Shadows } from '@/constants/theme';
 import { useQuery } from '@tanstack/react-query';
 import { notificationService } from '@/services/notification-service';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const { deliveryPerson } = useAuth();
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 10);
+  const tabHeight = 62 + bottomInset;
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread_notifications_count', deliveryPerson?.user_id],
@@ -26,24 +30,26 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primaryDark,
-        tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: Colors.card,
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.borderLight,
           borderTopWidth: 1,
-          borderTopColor: Colors.border,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          height: tabHeight,
+          paddingBottom: bottomInset,
           paddingTop: 8,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 4,
+          ...Shadows.md,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: 0,
         },
       }}
     >

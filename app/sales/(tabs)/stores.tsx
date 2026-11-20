@@ -25,6 +25,7 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { StoreCard } from '@/components/ui/StoreCard';
 import { CategoryPill } from '@/components/ui/CategoryPill';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { Store } from '@/types';
@@ -224,17 +225,22 @@ export default function StoresScreen() {
         data={filteredStores}
         keyExtractor={(item) => item.id}
         renderItem={renderStoreItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredStores.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Loading stores in territory..." />
+          ) : (
             <EmptyState
               icon={<StoreIcon size={42} color={Colors.textTertiary} />}
               title={searchQuery ? 'No matching retail stores' : 'No stores in your beat'}
@@ -246,7 +252,7 @@ export default function StoresScreen() {
               actionTitle="Register New Store"
               onAction={() => router.push('/sales/stores/add' as any)}
             />
-          ) : undefined
+          )
         }
       />
     </SafeAreaView>
@@ -259,7 +265,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   addStoreBtn: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     width: 42,
     height: 42,
     borderRadius: Radius.lg,
@@ -295,7 +301,7 @@ const styles = StyleSheet.create({
   },
   sortClose: {
     ...Typography.labelSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
   sortOptionsRow: {
@@ -320,11 +326,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sortChipTextActive: {
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
   },
   listContent: {
     padding: 18,
     paddingBottom: 40,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

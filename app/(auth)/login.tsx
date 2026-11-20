@@ -97,7 +97,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.verifiedBadge}>
-              <ShieldCheck size={12} color={Colors.primaryDark} />
+              <ShieldCheck size={12} color={Colors.primary} />
               <Text style={styles.verifiedText}>MOTIBA FMCG SUITE</Text>
             </View>
 
@@ -185,7 +185,7 @@ export default function LoginScreen() {
               size="lg"
               variant="primary"
               style={styles.loginBtn}
-              icon={<ArrowRight size={18} color={Colors.primaryDark} />}
+              icon={<ArrowRight size={18} color={Colors.white} />}
               iconPosition="right"
             />
           </View>
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: 10,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.8,
   },
   appTitle: {
@@ -329,8 +329,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   rememberText: {
     ...Typography.bodySm,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     ...Typography.bodySm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '600',
   },
   loginBtn: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   roleTag: {
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   roleDivider: {
     fontSize: 11,
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     ...Typography.bodySm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
 });

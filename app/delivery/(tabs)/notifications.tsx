@@ -59,7 +59,7 @@ export default function NotificationsScreen() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'delivery':
-        return <Truck size={18} color={Colors.primaryDark} />;
+        return <Truck size={18} color={Colors.primary} />;
       case 'order':
         return <Package size={18} color={Colors.info} />;
       case 'inventory':
@@ -86,7 +86,7 @@ export default function NotificationsScreen() {
             onPress={handleMarkAllRead}
             activeOpacity={0.7}
           >
-            <CheckCheck size={14} color={Colors.primaryDark} />
+            <CheckCheck size={14} color={Colors.primary} />
             <Text style={styles.markAllText}>Mark all read</Text>
           </TouchableOpacity>
         )}
@@ -101,8 +101,8 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
-            tintColor={Colors.primaryDark}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
           />
         }
         ListEmptyComponent={
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   markAllText: {
     ...Typography.tiny,
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   listContent: {
     padding: Spacing.md,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   titleUnread: {
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   unreadDot: {
     width: 7,

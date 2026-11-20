@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   quickBadgeActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   quickBadgeText: {
     ...Typography.tiny,

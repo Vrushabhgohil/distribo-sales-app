@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Colors } from '@/constants/theme';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 
 export default function SalesLayout() {
   const { userRole, loading } = useAuth();
@@ -24,11 +24,7 @@ export default function SalesLayout() {
   }, [userRole, loading, router]);
 
   if (loading || userRole !== 'sales_person') {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primaryDark} />
-      </View>
-    );
+    return <MotibaLoader fullscreen message="Loading Sales Operations..." />;
   }
 
   return (
@@ -56,12 +52,3 @@ export default function SalesLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
-  },
-});

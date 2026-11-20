@@ -25,6 +25,7 @@ import { Header } from '@/components/common/Header';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { Order } from '@/types';
@@ -130,7 +131,7 @@ export default function OrdersScreen() {
             }
             style={styles.reorderBtn}
           >
-            <Repeat size={13} color={Colors.primaryDark} />
+            <Repeat size={13} color={Colors.primary} />
             <Text style={styles.reorderBtnText}>Reorder</Text>
           </TouchableOpacity>
 
@@ -203,17 +204,22 @@ export default function OrdersScreen() {
         data={filteredOrders}
         keyExtractor={(item) => item.id}
         renderItem={renderOrderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredOrders.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Loading sales orders..." />
+          ) : (
             <EmptyState
               icon={<ShoppingBag size={42} color={Colors.textTertiary} />}
               title={
@@ -229,7 +235,7 @@ export default function OrdersScreen() {
               actionTitle="Book New FMCG Order"
               onAction={() => router.push('/sales/orders/create' as any)}
             />
-          ) : undefined
+          )
         }
       />
     </SafeAreaView>
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   addOrderBtn: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     width: 42,
     height: 42,
     borderRadius: Radius.lg,
@@ -270,8 +276,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   filterPillActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   filterPillText: {
     ...Typography.captionSm,
@@ -285,6 +291,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 18,
     paddingBottom: 40,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   orderCard: {
     backgroundColor: Colors.surface,
@@ -375,7 +386,7 @@ const styles = StyleSheet.create({
   },
   reorderBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   detailArrow: {
     padding: 2,

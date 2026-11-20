@@ -345,8 +345,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   statusChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   statusChipText: {
     ...Typography.captionSm,

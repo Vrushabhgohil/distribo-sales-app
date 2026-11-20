@@ -51,7 +51,7 @@ export const SalesMap: React.FC<SalesMapProps> = ({
       <View style={[styles.container, { height }]}>
         <View style={styles.webFallback}>
           <View style={styles.pinBadge}>
-            <MapPin size={22} color={Colors.primaryDark} />
+            <MapPin size={22} color={Colors.primary} />
           </View>
           <Text style={styles.coordText}>
             {latitude.toFixed(5)}, {longitude.toFixed(5)}
@@ -129,7 +129,7 @@ export const SalesMap: React.FC<SalesMapProps> = ({
   return (
     <View style={[styles.container, { height }]}>
       <View style={styles.webFallback}>
-        <MapPin size={22} color={Colors.primaryDark} />
+        <MapPin size={22} color={Colors.primary} />
         <Text style={styles.coordText}>
           {latitude.toFixed(5)}, {longitude.toFixed(5)}
         </Text>
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   navButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: Radius.md,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,

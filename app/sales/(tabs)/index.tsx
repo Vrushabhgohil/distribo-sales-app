@@ -1,47 +1,52 @@
-import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-  Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Bell,
-  Navigation,
-  ShoppingBag,
-  Store as StoreIcon,
-  Clock,
-  CheckCircle2,
-  CalendarClock,
-  PlusCircle,
-  TrendingUp,
-  MapPin,
-  ChevronRight,
-  Radio,
-  FileSpreadsheet,
-  AlertCircle,
-  CreditCard,
-  UserCheck,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useLocationTracker } from '@/features/location/LocationTrackerContext';
 import { dataService } from '@/services/data-service';
+import { Product, Store } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import {
+  ArrowRight,
+  Bell,
+  Camera,
+  ChevronDown,
+  ChevronRight,
+  Droplets,
+  Flame,
+  MapPin,
+  Navigation,
+  Package,
+  Plus,
+  Radio,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Store as StoreIcon,
+  Wheat,
+  X,
+} from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import {
+  Modal,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { salesperson } = useAuth();
-  const { isTracking, permissionDenied, openAppSettings, trackingStatus, currentCoords } = useLocationTracker();
+  const { isTracking, currentCoords } = useLocationTracker();
   const [refreshing, setRefreshing] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   // Queries for live Supabase data
   const {
@@ -63,7 +68,14 @@ export default function HomeScreen() {
   });
 
   const {
-    data: todayVisits = [],
+    data: products = [],
+    refetch: refetchProducts,
+  } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => dataService.getProducts(),
+  });
+
+  const {
     refetch: refetchVisits,
   } = useQuery({
     queryKey: ['today-visits', salesperson?.id],
@@ -88,101 +100,146 @@ export default function HomeScreen() {
     queryFn: () => dataService.getNotifications(),
   });
 
-  const {
-    data: followUps = [],
-    refetch: refetchFollowUps,
-  } = useQuery({
-    queryKey: ['follow-ups', salesperson?.id],
-    queryFn: () => dataService.getFollowUps(salesperson?.id || ''),
-    enabled: !!salesperson?.id,
-  });
-
   const onRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
       refetchStores(),
       refetchOrders(),
+      refetchProducts(),
       refetchVisits(),
       refetchActiveVisit(),
       refetchNotifs(),
-      refetchFollowUps(),
     ]);
     setRefreshing(false);
   };
 
   // Metrics calculations
   const todayDateStr = new Date().toISOString().split('T')[0];
-  const todayOrders = useMemo(() => orders.filter((o) => o.order_date === todayDateStr), [orders, todayDateStr]);
-  const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'pending'), [orders]);
-  const confirmedOrders = useMemo(() => orders.filter((o) => o.status === 'confirmed'), [orders]);
+  const todayOrders = useMemo(
+    () => orders.filter((o) => o.order_date === todayDateStr),
+    [orders, todayDateStr]
+  );
 
   const todaySalesAmount = useMemo(() => {
     return todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
   }, [todayOrders]);
 
-  const totalOutstandingEstimate = useMemo(() => {
-    return stores.reduce((sum, s) => sum + (s.credit_limit || 0), 0);
-  }, [stores]);
-
-  const pendingFollowUps = useMemo(() => {
-    return followUps.filter((f) => f.status !== 'completed');
-  }, [followUps]);
-
   const unreadNotifCount = notifications.filter((n) => !n.is_read).length;
 
-  const formattedDate = new Date().toLocaleDateString('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  // Real products from database only (no dummy fallback)
+  const bestsellers = useMemo(() => products.slice(0, 6), [products]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Premium Header Bar */}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* ── 1. Top Instagram-Style Header Bar ── */}
       <View style={styles.topHeader}>
-        <View style={styles.userSection}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => router.push('/sales/(tabs)/profile')}
-            style={styles.avatarBorder}
-          >
-            <Image
-              source={require('@/assets/images/logo.png')}
-              style={styles.avatarImg}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setDropdownVisible(!dropdownVisible)}
+          style={styles.instagramBrandRow}
+        >
+          <Text style={styles.instagramBrandText}>Motiba</Text>
+          <ChevronDown
+            size={18}
+            color={Colors.primary}
+            style={[
+              styles.brandChevron,
+              dropdownVisible && styles.brandChevronRotated,
+            ]}
+          />
+        </TouchableOpacity>
 
-          <View style={styles.userTextCol}>
-            <View style={styles.badgeRow}>
-              <View style={styles.verifiedDot} />
-              <Text style={styles.roleTag}>FIELD SALES OFFICER</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push('/sales/notifications' as any)}
+          style={styles.bellBtn}
+        >
+          <Bell size={20} color={Colors.textPrimary} />
+          {unreadNotifCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadNotifCount > 9 ? '9+' : unreadNotifCount}</Text>
             </View>
-            <Text style={styles.userName} numberOfLines={1}>
-              {salesperson?.name || 'Sales Representative'}
-            </Text>
-            <Text style={styles.userArea} numberOfLines={1}>
-              {salesperson?.assigned_area || 'Central Beat'} • {salesperson?.employee_id}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/notifications' as any)}
-            style={styles.bellButton}
-          >
-            <Bell size={20} color={Colors.textPrimary} />
-            {unreadNotifCount > 0 && (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unreadNotifCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+          )}
+        </TouchableOpacity>
       </View>
+
+      {/* ── Dropdown Modal with Location and Status Fields ── */}
+      <Modal
+        visible={dropdownVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDropdownVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setDropdownVisible(false)}>
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownCard}>
+                <View style={styles.dropdownHeader}>
+                  <Text style={styles.dropdownHeaderTitle}>Beat Telemetry & Status</Text>
+                  <TouchableOpacity
+                    onPress={() => setDropdownVisible(false)}
+                    style={styles.dropdownCloseBtn}
+                  >
+                    <X size={18} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Location Field */}
+                <View style={styles.dropdownFieldBox}>
+                  <View style={styles.dropdownIconCircle}>
+                    <MapPin size={18} color={Colors.primary} />
+                  </View>
+                  <View style={styles.dropdownFieldTextCol}>
+                    <Text style={styles.dropdownFieldLabel}>CURRENT LOCATION</Text>
+                    <Text style={styles.dropdownFieldValue}>
+                      Rajkot Hub • {salesperson?.assigned_area || 'Mota Varachha'}
+                    </Text>
+                    <Text style={styles.dropdownFieldSub}>
+                      {currentCoords
+                        ? `GPS: ${currentCoords.latitude.toFixed(4)}, ${currentCoords.longitude.toFixed(4)}`
+                        : 'Live beat geofence locked'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Status Field */}
+                <View style={[styles.dropdownFieldBox, { marginTop: 12 }]}>
+                  <View style={[styles.dropdownIconCircle, { backgroundColor: isTracking ? Colors.secondaryLight : Colors.goldLight }]}>
+                    <Radio size={18} color={isTracking ? Colors.secondary : Colors.goldDark} />
+                  </View>
+                  <View style={styles.dropdownFieldTextCol}>
+                    <Text style={styles.dropdownFieldLabel}>DUTY & TRACKING STATUS</Text>
+                    <View style={styles.statusPillRow}>
+                      <View style={[styles.statusDot, { backgroundColor: isTracking ? Colors.secondary : Colors.gold }]} />
+                      <Text style={[styles.dropdownFieldValue, { color: isTracking ? Colors.secondary : Colors.goldDark }]}>
+                        {isTracking ? 'Active on Beat • On Duty' : 'Standby / Paused'}
+                      </Text>
+                    </View>
+                    <Text style={styles.dropdownFieldSub}>
+                      {isTracking
+                        ? 'Automated live transmission to central hub dispatcher'
+                        : 'Tap below to resume live tracking transmission'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Dropdown Action Link */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setDropdownVisible(false);
+                    router.push('/sales/location' as any);
+                  }}
+                  style={styles.dropdownActionBtn}
+                >
+                  <Text style={styles.dropdownActionBtnText}>Open Beat Route & GPS Map</Text>
+                  <ArrowRight size={15} color={Colors.white} />
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -191,378 +248,337 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
       >
-        {/* GPS Live Telemetry Pill Bar */}
+        {/* ── 2. Pill Search Bar ── */}
         <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => {
-            if (permissionDenied) {
-              openAppSettings();
-            } else {
-              router.push('/sales/location' as any);
-            }
-          }}
-          style={styles.gpsContainer}
+          activeOpacity={0.85}
+          onPress={() => router.push('/sales/products' as any)}
+          style={styles.searchPill}
         >
-          <View style={styles.gpsInfoCol}>
-            <View style={styles.gpsStatusRow}>
-              <View
-                style={[
-                  styles.pulseDot,
-                  {
-                    backgroundColor: isTracking
-                      ? Colors.secondary
-                      : permissionDenied
-                      ? Colors.warning
-                      : Colors.gray400,
-                  },
-                ]}
-              />
-              <Text style={styles.gpsStatusText}>
-                {isTracking
-                  ? 'Automatic GPS Tracking Active'
-                  : permissionDenied
-                  ? 'Location Permission Required'
-                  : 'Starting Automatic GPS Tracking...'}
-              </Text>
-            </View>
-            <Text style={styles.gpsCoordText}>
-              {isTracking
-                ? currentCoords
-                  ? `${currentCoords.latitude.toFixed(4)}, ${currentCoords.longitude.toFixed(4)} • Live Beat Sync`
-                  : 'Acquiring GPS lock...'
-                : permissionDenied
-                ? 'Tap to grant location permission in Settings for beat tracking'
-                : 'Connecting to device GPS...'}
-            </Text>
+          <Search size={18} color={Colors.textTertiary} style={styles.searchIcon} />
+          <Text style={styles.searchPlaceholder}>Search products, retail outlets, orders...</Text>
+          <View style={styles.searchCameraBtn}>
+            <Camera size={18} color={Colors.primary} />
           </View>
-
-          {permissionDenied ? (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={openAppSettings}
-              style={[styles.gpsButton, styles.gpsButtonStart]}
-            >
-              <Text style={[styles.gpsBtnText, { color: Colors.secondary }]}>Settings</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.gpsBadgeActive}>
-              <Text style={styles.gpsBadgeText}>
-                {isTracking ? 'Active' : 'Syncing'}
-              </Text>
-            </View>
-          )}
         </TouchableOpacity>
 
-        {/* Active Store Visit in Progress Banner */}
-        {activeVisit && (
-          <View style={styles.activeVisitCard}>
-            <View style={styles.activeVisitHeader}>
-              <View style={styles.visitPill}>
-                <View style={styles.visitPillDot} />
-                <Text style={styles.visitPillText}>VISIT IN PROGRESS</Text>
-              </View>
-              <Text style={styles.visitTimeText}>
-                Started {new Date(activeVisit.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {/* ── 3. Live Beat / Visit Tracker Card ("Being prepared" card in reference) ── */}
+        {activeVisit ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() =>
+              router.push({
+                pathname: '/sales/stores/visit' as any,
+                params: { storeId: activeVisit.store_id, visitId: activeVisit.id },
+              })
+            }
+            style={styles.trackerCard}
+          >
+            <View style={[styles.trackerIconBox, { backgroundColor: Colors.secondaryLight }]}>
+              <StoreIcon size={20} color={Colors.secondary} />
+            </View>
+
+            <View style={styles.trackerInfo}>
+              <Text style={styles.trackerTitle}>Store Visit in Progress</Text>
+              <Text style={styles.trackerSubtitle} numberOfLines={1}>
+                {activeVisit.store?.name || 'Retail Outlet'} • Checked in
               </Text>
             </View>
 
-            <Text style={styles.activeStoreName}>
-              {activeVisit.store?.name || 'Retail Outlet'}
-            </Text>
-            <Text style={styles.activeStoreAddress}>
-              {activeVisit.store?.address || 'Store location'}
-            </Text>
+            <View style={styles.trackerRight}>
+              <Text style={[styles.trackerEta, { color: Colors.secondary }]}>Active</Text>
+              <ChevronRight size={16} color={Colors.textTertiary} />
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/sales/(tabs)/orders')}
+            style={styles.trackerCard}
+          >
+            <View style={[styles.trackerIconBox, { backgroundColor: Colors.primaryLight }]}>
+              <ShoppingBag size={20} color={Colors.primary} />
+            </View>
 
-            <View style={styles.activeVisitBtns}>
-              <Button
-                title="Book Order"
-                variant="primary"
-                size="sm"
-                icon={<PlusCircle size={14} color={Colors.white} />}
-                onPress={() =>
-                  router.push({
-                    pathname: '/sales/orders/create' as any,
-                    params: { storeId: activeVisit.store_id },
-                  })
-                }
-                style={{ flex: 1, marginRight: 8 }}
-              />
-              <Button
-                title="Finish Check-out"
-                variant="outline"
-                size="sm"
-                icon={<CheckCircle2 size={14} color={Colors.textPrimary} />}
+            <View style={styles.trackerInfo}>
+              <Text style={styles.trackerTitle}>{"Today's Booking Dispatch"}</Text>
+              <Text style={styles.trackerSubtitle} numberOfLines={1}>
+                {todayOrders.length > 0
+                  ? `₹${todaySalesAmount.toLocaleString('en-IN')} booked • ${todayOrders.length} orders recorded`
+                  : 'Start booking beat retail orders today'}
+              </Text>
+            </View>
+
+            <View style={styles.trackerRight}>
+              <Text style={styles.trackerEta}>
+                {todayOrders.length > 0 ? `${todayOrders.length} orders` : 'Beat Ready'}
+              </Text>
+              <ChevronRight size={16} color={Colors.textTertiary} />
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* ── 4. 2x2 Category Bento Grid ── */}
+        <View style={styles.bentoGrid}>
+          {/* Card 1: Grains & Pulses */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/sales/products' as any)}
+            style={[styles.bentoCard, styles.bentoGrains]}
+          >
+            <View style={styles.bentoTextCol}>
+              <Text style={styles.bentoTitle}>Grains & Dals</Text>
+              <Text style={styles.bentoSub}>Basmati, toor & lentils</Text>
+              <View style={[styles.bentoBadge, { backgroundColor: Colors.goldLight }]}>
+                <Text style={[styles.bentoBadgeText, { color: Colors.goldDark }]}>Pure Indian</Text>
+              </View>
+            </View>
+            <View style={[styles.bentoIconCircle, { backgroundColor: Colors.goldLight }]}>
+              <Wheat size={26} color={Colors.goldDark} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Card 2: Pure Atta / Flours */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/sales/products' as any)}
+            style={[styles.bentoCard, styles.bentoAtta]}
+          >
+            <View style={styles.bentoTextCol}>
+              <Text style={styles.bentoTitle}>Pure Atta</Text>
+              <Text style={styles.bentoSub}>Chakki stone ground</Text>
+              <View style={[styles.bentoBadge, { backgroundColor: Colors.secondaryLight }]}>
+                <Text style={[styles.bentoBadgeText, { color: Colors.secondary }]}>100% Whole</Text>
+              </View>
+            </View>
+            <View style={[styles.bentoIconCircle, { backgroundColor: Colors.secondaryLight }]}>
+              <Sparkles size={26} color={Colors.secondary} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Card 3: Royal Spices */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/sales/products' as any)}
+            style={[styles.bentoCard, styles.bentoSpices]}
+          >
+            <View style={styles.bentoTextCol}>
+              <Text style={styles.bentoTitle}>Royal Spices</Text>
+              <Text style={styles.bentoSub}>Turmeric, chilli & blends</Text>
+              <View style={[styles.bentoBadge, { backgroundColor: Colors.primaryLight }]}>
+                <Text style={[styles.bentoBadgeText, { color: Colors.primary }]}>Aromatic</Text>
+              </View>
+            </View>
+            <View style={[styles.bentoIconCircle, { backgroundColor: Colors.primaryLight }]}>
+              <Flame size={26} color={Colors.primary} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Card 4: Edible Oils & More */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/sales/products' as any)}
+            style={[styles.bentoCard, styles.bentoOils]}
+          >
+            <View style={styles.bentoTextCol}>
+              <Text style={styles.bentoTitle}>Edible Oils</Text>
+              <Text style={styles.bentoSub}>Mustard, groundnut</Text>
+              <View style={[styles.bentoBadge, { backgroundColor: Colors.goldLight }]}>
+                <Text style={[styles.bentoBadgeText, { color: Colors.goldDark }]}>Cold Pressed</Text>
+              </View>
+            </View>
+            <View style={[styles.bentoIconCircle, { backgroundColor: Colors.goldLight }]}>
+              <Droplets size={26} color={Colors.goldDark} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── 5. Action Card ("Enroll New Retail Store") ── */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/sales/stores/add' as any)}
+          style={styles.actionCard}
+        >
+          <View style={styles.actionIconBox}>
+            <Package size={26} color={Colors.primary} />
+          </View>
+
+          <View style={styles.actionInfo}>
+            <Text style={styles.actionTitle}>Enroll New Retail Store</Text>
+            <Text style={styles.actionSubtitle}>Register retail outlet & assign credit limit</Text>
+          </View>
+
+          <View style={styles.actionArrowBtn}>
+            <ArrowRight size={18} color={Colors.white} />
+          </View>
+        </TouchableOpacity>
+
+        {/* ── 6. Beat Bestsellers Carousel (Real Data from Database) ── */}
+        {bestsellers.length > 0 && (
+          <>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Beat Bestsellers</Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push('/sales/products' as any)}
+              >
+                <Text style={styles.viewAllText}>See all &gt;</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bestsellerScroll}
+            >
+              {bestsellers.map((item: Product) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.85}
+                  onPress={() => router.push(`/sales/products/${item.id}` as any)}
+                  style={styles.bestsellerCard}
+                >
+                  <View style={styles.bestsellerImgWrap}>
+                    {item.image_url ? (
+                      <Image source={{ uri: item.image_url }} style={styles.bestsellerImg} contentFit="cover" />
+                    ) : (
+                      <View style={styles.bestsellerImgPlaceholder}>
+                        <Package size={32} color={Colors.textTertiary} />
+                      </View>
+                    )}
+
+                    <View style={styles.ratingBadge}>
+                      <Star size={11} color={Colors.gold} fill={Colors.gold} />
+                      <Text style={styles.ratingText}>4.9</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.bestsellerInfo}>
+                    <Text style={styles.bestsellerName} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.bestsellerPack}>{item.pack_size || item.unit}</Text>
+
+                    <View style={styles.bestsellerBottom}>
+                      <View>
+                        <Text style={styles.bestsellerPrice}>₹{item.selling_price}</Text>
+                        {item.mrp > item.selling_price && (
+                          <Text style={styles.bestsellerMrp}>₹{item.mrp}</Text>
+                        )}
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/sales/orders/create' as any,
+                            params: { productId: item.id },
+                          })
+                        }
+                        style={styles.addCircleBtn}
+                      >
+                        <Plus size={16} color={Colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* ── 7. Retail Outlets on Beat ── */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 20 }]}>
+          <Text style={styles.sectionTitle}>Retail Outlets on Beat</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/sales/(tabs)/stores')}
+          >
+            <Text style={styles.viewAllText}>See all &gt;</Text>
+          </TouchableOpacity>
+        </View>
+
+        {stores.slice(0, 3).map((store: Store) => (
+          <TouchableOpacity
+            key={store.id}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/sales/stores/${store.id}` as any)}
+            style={styles.storeCard}
+          >
+            <View style={styles.storeCardTop}>
+              <View style={styles.storeAvatarBox}>
+                <Text style={styles.storeAvatarText}>
+                  {store.name.slice(0, 2).toUpperCase()}
+                </Text>
+              </View>
+
+              <View style={styles.storeInfoCol}>
+                <Text style={styles.storeName} numberOfLines={1}>
+                  {store.name}
+                </Text>
+                <Text style={styles.storeOwner} numberOfLines={1}>
+                  {store.owner_name} • {store.store_type || 'Supermarket'}
+                </Text>
+                <View style={styles.storeLocRow}>
+                  <MapPin size={12} color={Colors.textTertiary} />
+                  <Text style={styles.storeAreaText} numberOfLines={1}>
+                    {store.area}, {store.city}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.creditPill}>
+                <Text style={styles.creditPillLabel}>Credit</Text>
+                <Text style={styles.creditPillVal}>
+                  ₹{(store.credit_limit || 0).toLocaleString('en-IN')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.storeActionsRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() =>
                   router.push({
                     pathname: '/sales/stores/visit' as any,
-                    params: { storeId: activeVisit.store_id, visitId: activeVisit.id },
+                    params: { storeId: store.id },
                   })
                 }
-                style={{ flex: 1 }}
-              />
-            </View>
-          </View>
-        )}
+                style={styles.storeCheckInBtn}
+              >
+                <Navigation size={13} color={Colors.primary} />
+                <Text style={styles.storeCheckInText}>Check In</Text>
+              </TouchableOpacity>
 
-        {/* Today's Sales Hero Card (Asymmetric Highlights) */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.heroOverline}>{"TODAY'S TOTAL BOOKINGS"}</Text>
-              <Text style={styles.heroAmount}>
-                ₹{todaySalesAmount.toLocaleString('en-IN')}
-              </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  router.push({
+                    pathname: '/sales/orders/create' as any,
+                    params: { storeId: store.id },
+                  })
+                }
+                style={styles.storeOrderBtn}
+              >
+                <ShoppingBag size={13} color={Colors.white} />
+                <Text style={styles.storeOrderText}>Book Order</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.heroIconWrap}>
-              <TrendingUp size={24} color={Colors.gold} />
-            </View>
-          </View>
+          </TouchableOpacity>
+        ))}
 
-          <View style={styles.heroDivider} />
-
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{todayOrders.length}</Text>
-              <Text style={styles.heroStatLabel}>{"Today's Orders"}</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{todayVisits.length}</Text>
-              <Text style={styles.heroStatLabel}>Store Visits</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{pendingOrders.length}</Text>
-              <Text style={styles.heroStatLabel}>Pending Approval</Text>
-            </View>
-          </View>
+        {/* ── 8. Live GPS Transmission Status ── */}
+        <View style={styles.gpsBar}>
+          <View style={styles.gpsDotActive} />
+          <Text style={styles.gpsText}>
+            {isTracking
+              ? `GPS Live Transmission: ${currentCoords ? `${currentCoords.latitude.toFixed(4)}, ${currentCoords.longitude.toFixed(4)}` : 'Active'}`
+              : 'GPS Tracking Active • Central Dispatch'}
+          </Text>
         </View>
-
-        {/* 2x2 Balanced Performance Grid */}
-        <View style={styles.metricGrid}>
-          {/* Card 1: Beat Stores */}
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => router.push('/sales/(tabs)/stores')}
-            style={styles.gridCard}
-          >
-            <View style={[styles.gridIconCircle, { backgroundColor: Colors.goldLight }]}>
-              <StoreIcon size={20} color={Colors.goldDark} />
-            </View>
-            <Text style={styles.gridVal}>{stores.length}</Text>
-            <Text style={styles.gridLabel}>Territory Outlets</Text>
-            <Text style={styles.gridSub}>{todayVisits.length} visited today</Text>
-          </TouchableOpacity>
-
-          {/* Card 2: Confirmed Orders */}
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => router.push('/sales/(tabs)/orders')}
-            style={styles.gridCard}
-          >
-            <View style={[styles.gridIconCircle, { backgroundColor: Colors.secondaryLight }]}>
-              <CheckCircle2 size={20} color={Colors.secondary} />
-            </View>
-            <Text style={styles.gridVal}>{confirmedOrders.length}</Text>
-            <Text style={styles.gridLabel}>Approved Orders</Text>
-            <Text style={styles.gridSub}>Fulfillment ready</Text>
-          </TouchableOpacity>
-
-          {/* Card 3: Pending Follow-ups */}
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => router.push('/sales/(tabs)/follow-ups')}
-            style={styles.gridCard}
-          >
-            <View style={[styles.gridIconCircle, { backgroundColor: Colors.goldLight }]}>
-              <CalendarClock size={20} color={Colors.gold} />
-            </View>
-            <Text style={styles.gridVal}>{pendingFollowUps.length}</Text>
-            <Text style={styles.gridLabel}>Pending Tasks</Text>
-            <Text style={styles.gridSub}>Collections & audits</Text>
-          </TouchableOpacity>
-
-          {/* Card 4: Total Credit Exposure */}
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => router.push('/sales/(tabs)/stores')}
-            style={styles.gridCard}
-          >
-            <View style={[styles.gridIconCircle, { backgroundColor: Colors.primaryLight }]}>
-              <CreditCard size={20} color={Colors.primary} />
-            </View>
-            <Text style={styles.gridVal}>
-              ₹{totalOutstandingEstimate > 100000 ? `${(totalOutstandingEstimate / 100000).toFixed(1)}L` : totalOutstandingEstimate.toLocaleString('en-IN')}
-            </Text>
-            <Text style={styles.gridLabel}>Credit Outlets</Text>
-            <Text style={styles.gridSub}>Assigned balance</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Launchpad Action Grid (Clean Outlined Buttons) */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Beat Operations</Text>
-          <Text style={styles.sectionDate}>{formattedDate}</Text>
-        </View>
-
-        <View style={styles.launchpadGrid}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/(tabs)/stores')}
-            style={styles.launchpadBtn}
-          >
-            <View style={[styles.launchpadIcon, { backgroundColor: Colors.primaryLight }]}>
-              <MapPin size={22} color={Colors.primary} />
-            </View>
-            <Text style={styles.launchpadLabel}>Store Check-In</Text>
-            <Text style={styles.launchpadSub}>GPS Geofence</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/orders/create' as any)}
-            style={styles.launchpadBtn}
-          >
-            <View style={[styles.launchpadIcon, { backgroundColor: Colors.goldLight }]}>
-              <PlusCircle size={22} color={Colors.goldDark} />
-            </View>
-            <Text style={styles.launchpadLabel}>Book Order</Text>
-            <Text style={styles.launchpadSub}>Direct Dispatch</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/products' as any)}
-            style={styles.launchpadBtn}
-          >
-            <View style={[styles.launchpadIcon, { backgroundColor: Colors.secondaryLight }]}>
-              <ShoppingBag size={22} color={Colors.secondary} />
-            </View>
-            <Text style={styles.launchpadLabel}>Catalogue</Text>
-            <Text style={styles.launchpadSub}>Stock & Pricing</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/(tabs)/follow-ups')}
-            style={styles.launchpadBtn}
-          >
-            <View style={[styles.launchpadIcon, { backgroundColor: Colors.goldLight }]}>
-              <CalendarClock size={22} color={Colors.goldDark} />
-            </View>
-            <Text style={styles.launchpadLabel}>Follow-ups</Text>
-            <Text style={styles.launchpadSub}>Tasks & Collections</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Orders List with Beautiful Visual Status Progression */}
-        <View style={[styles.sectionHeaderRow, { marginTop: 16 }]}>
-          <Text style={styles.sectionTitle}>Recent Bookings</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/(tabs)/orders')}
-          >
-            <Text style={styles.viewAllText}>View All ({orders.length})</Text>
-          </TouchableOpacity>
-        </View>
-
-        {orders.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <ShoppingBag size={36} color={Colors.textTertiary} />
-            <Text style={styles.emptyTitle}>No orders placed yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Select an outlet from your beat list to book your first FMCG order.
-            </Text>
-            <Button
-              title="Book New Order"
-              variant="primary"
-              size="sm"
-              onPress={() => router.push('/sales/orders/create' as any)}
-              style={{ marginTop: 12, paddingHorizontal: 20 }}
-            />
-          </View>
-        ) : (
-          orders.slice(0, 4).map((order) => (
-            <TouchableOpacity
-              key={order.id}
-              activeOpacity={0.7}
-              onPress={() => router.push(`/sales/orders/${order.id}` as any)}
-              style={styles.orderCard}
-            >
-              <View style={styles.orderTop}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.orderNumber}>{order.order_number}</Text>
-                  <Text style={styles.orderStore} numberOfLines={1}>
-                    {order.store?.name || 'Retail Outlet'}
-                  </Text>
-                </View>
-                <StatusBadge status={order.status} />
-              </View>
-
-              <View style={styles.orderDivider} />
-
-              <View style={styles.orderBottom}>
-                <Text style={styles.orderMeta}>
-                  {new Date(order.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}{' '}
-                  • {order.items?.length || 0} line items
-                </Text>
-                <Text style={styles.orderPrice}>
-                  ₹{order.total_amount?.toLocaleString('en-IN')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
-
-        {/* Upcoming Tasks & Follow-ups */}
-        <View style={[styles.sectionHeaderRow, { marginTop: 20 }]}>
-          <Text style={styles.sectionTitle}>Pending Follow-ups</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/sales/(tabs)/follow-ups')}
-          >
-            <Text style={styles.viewAllText}>Manage</Text>
-          </TouchableOpacity>
-        </View>
-
-        {pendingFollowUps.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <CalendarClock size={36} color={Colors.textTertiary} />
-            <Text style={styles.emptyTitle}>All follow-ups completed</Text>
-            <Text style={styles.emptySubtitle}>
-              Great job! You have no pending payment collections or store meetings.
-            </Text>
-          </View>
-        ) : (
-          pendingFollowUps.slice(0, 3).map((f) => (
-            <TouchableOpacity
-              key={f.id}
-              activeOpacity={0.7}
-              onPress={() => router.push('/sales/(tabs)/follow-ups')}
-              style={styles.taskCard}
-            >
-              <View style={styles.taskIconBox}>
-                <Clock size={16} color={Colors.primaryDark} />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.taskStore} numberOfLines={1}>{f.store?.name || 'Retail Outlet'}</Text>
-                <Text style={styles.taskReason} numberOfLines={1}>{f.reason}</Text>
-                <Text style={styles.taskDate}>
-                  Due: {new Date(f.follow_up_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                  {f.follow_up_time ? ` at ${f.follow_up_time}` : ''}
-                </Text>
-              </View>
-              <ChevronRight size={16} color={Colors.textTertiary} />
-            </TouchableOpacity>
-          ))
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -578,82 +594,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 8,
+    paddingBottom: 10,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
-  userSection: {
+  instagramBrandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    paddingVertical: 2,
   },
-  avatarBorder: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
-    padding: 3,
-    borderWidth: 1.5,
-    borderColor: Colors.primary + '40',
-    ...Shadows.xs,
-  },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: Radius.md,
-  },
-  userTextCol: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 2,
-  },
-  verifiedDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.secondary,
-  },
-  roleTag: {
-    ...Typography.captionSm,
-    fontWeight: '800',
+
+  instagramBrandText: {
+    fontSize: 29,
+    fontWeight: '500',
     color: Colors.primary,
-    letterSpacing: 0.6,
+    fontFamily: Platform.select({
+      web: 'Instagram Sans Headline',
+      ios: 'InstagramSansHeadline',
+      android: 'InstagramSansHeadline',
+      default: 'Instagram Sans Headline',
+    }),
+    letterSpacing: -0.5,
   },
-  userName: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
+
+  brandChevron: {
+    marginLeft: 6,
+    marginTop: 2,
   },
-  userArea: {
-    ...Typography.captionSm,
-    color: Colors.textSecondary,
-    marginTop: 1,
+  brandChevronRotated: {
+    transform: [{ rotate: '180deg' }],
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bellButton: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.md,
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
     backgroundColor: Colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    ...Shadows.xs,
   },
   bellBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: Colors.error,
+    top: 5,
+    right: 5,
+    backgroundColor: Colors.primary,
     borderRadius: Radius.full,
     minWidth: 16,
     height: 16,
@@ -663,18 +652,142 @@ const styles = StyleSheet.create({
   },
   bellBadgeText: {
     color: Colors.white,
-    ...Typography.captionSm,
     fontSize: 9,
     fontWeight: '800',
   },
+
+  // Modal Backdrop & Dropdown Card
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(29, 19, 14, 0.45)',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 95 : 70,
+  },
+  dropdownCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius['2xl'],
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.lg,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  dropdownHeaderTitle: {
+    ...Typography.labelLg,
+    color: Colors.textPrimary,
+    fontWeight: '800',
+  },
+  dropdownCloseBtn: {
+    padding: 4,
+  },
+  dropdownFieldBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: Radius.xl,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  dropdownIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  dropdownFieldTextCol: {
+    flex: 1,
+  },
+  dropdownFieldLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: Colors.goldDark,
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  dropdownFieldValue: {
+    ...Typography.labelLg,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  dropdownFieldSub: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontSize: 11,
+  },
+  statusPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  dropdownActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    borderRadius: Radius.lg,
+    marginTop: 16,
+    ...Shadows.xs,
+  },
+  dropdownActionBtnText: {
+    ...Typography.buttonSm,
+    color: Colors.white,
+    fontWeight: '700',
+  },
+
   scrollContent: {
     padding: 18,
     paddingBottom: 40,
   },
-  gpsContainer: {
+
+  // Pill Search Bar
+  searchPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 14,
+    ...Shadows.xs,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchPlaceholder: {
+    ...Typography.bodySm,
+    color: Colors.textTertiary,
+    flex: 1,
+  },
+  searchCameraBtn: {
+    padding: 4,
+  },
+
+  // Tracker Card ("Being prepared" in reference)
+  trackerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
     padding: 14,
@@ -683,218 +796,151 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     ...Shadows.xs,
   },
-  gpsInfoCol: {
-    flex: 1,
-    marginRight: 12,
-  },
-  gpsStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  gpsStatusText: {
-    ...Typography.labelSm,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  gpsCoordText: {
-    ...Typography.captionSm,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  gpsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: Radius.full,
-  },
-  gpsButtonStart: {
-    backgroundColor: Colors.secondaryLight,
-    borderWidth: 1,
-    borderColor: Colors.secondaryTint,
-  },
-  gpsButtonStop: {
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.primaryTint,
-  },
-  gpsBtnText: {
-    ...Typography.buttonSm,
-  },
-  gpsBadgeActive: {
-    backgroundColor: Colors.secondaryLight,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.secondaryTint,
-  },
-  gpsBadgeText: {
-    ...Typography.captionSm,
-    color: Colors.secondary,
-    fontWeight: '700',
-  },
-  activeVisitCard: {
-    backgroundColor: Colors.surfaceSecondary,
-    borderColor: Colors.gold,
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
-    padding: 16,
-    marginBottom: 14,
-    ...Shadows.xs,
-  },
-  activeVisitHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  visitPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.secondaryLight,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: Radius.full,
-  },
-  visitPillDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.secondary,
-  },
-  visitPillText: {
-    ...Typography.captionSm,
-    fontWeight: '800',
-    color: Colors.secondary,
-    letterSpacing: 0.6,
-  },
-  visitTimeText: {
-    ...Typography.captionSm,
-    color: Colors.textSecondary,
-  },
-  activeStoreName: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-  },
-  activeStoreAddress: {
-    ...Typography.captionMd,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    marginBottom: 14,
-  },
-  activeVisitBtns: {
-    flexDirection: 'row',
-  },
-  heroCard: {
-    backgroundColor: Colors.primaryDark,
-    borderRadius: Radius['2xl'],
-    padding: 20,
-    marginBottom: 14,
-    ...Shadows.md,
-  },
-  heroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heroOverline: {
-    ...Typography.captionSm,
-    color: Colors.gold,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  heroAmount: {
-    ...Typography.displayLg,
-    color: Colors.white,
-    marginTop: 4,
-  },
-  heroIconWrap: {
-    width: 48,
-    height: 48,
+  trackerIconBox: {
+    width: 44,
+    height: 44,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(217, 165, 46, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(217, 165, 46, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  heroDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    marginVertical: 14,
+  trackerInfo: {
+    flex: 1,
   },
-  heroStatsRow: {
+  trackerTitle: {
+    ...Typography.labelLg,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  trackerSubtitle: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  trackerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 4,
   },
-  heroStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  heroStatVal: {
-    ...Typography.statMd,
-    color: Colors.white,
-  },
-  heroStatLabel: {
+  trackerEta: {
     ...Typography.captionSm,
-    color: '#FFF8E9',
-    opacity: 0.95,
-    marginTop: 2,
-    textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '700',
+    color: Colors.goldDark,
   },
-  heroStatDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  metricGrid: {
+
+  // 2x2 Bento Grid
+  bentoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 14,
   },
-  gridCard: {
+  bentoCard: {
     width: '48%',
-    backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    minHeight: 125,
+    justifyContent: 'space-between',
     ...Shadows.xs,
   },
-  gridIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
+  bentoGrains: {
+    backgroundColor: '#FAF4E8',
+    borderColor: '#F1E3CB',
+  },
+  bentoAtta: {
+    backgroundColor: '#F0F7F2',
+    borderColor: '#D8ECE0',
+  },
+  bentoSpices: {
+    backgroundColor: '#FCF2F3',
+    borderColor: '#F6D9DC',
+  },
+  bentoOils: {
+    backgroundColor: '#FDF8EB',
+    borderColor: '#F6ECCF',
+  },
+  bentoTextCol: {
+    gap: 2,
+  },
+  bentoTitle: {
+    ...Typography.h4,
+    fontSize: 16,
+    color: Colors.textPrimary,
+    fontWeight: '800',
+  },
+  bentoSub: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    fontSize: 11,
+  },
+  bentoBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    marginTop: 6,
+  },
+  bentoBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  bentoIconCircle: {
+    alignSelf: 'flex-end',
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginTop: 6,
   },
-  gridVal: {
-    ...Typography.statLg,
+
+  // Wide Action Card ("Send a parcel" in reference)
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    marginBottom: 16,
+    ...Shadows.xs,
+  },
+  actionIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  actionInfo: {
+    flex: 1,
+  },
+  actionTitle: {
+    ...Typography.h4,
+    fontSize: 15,
     color: Colors.textPrimary,
+    fontWeight: '700',
   },
-  gridLabel: {
-    ...Typography.labelSm,
+  actionSubtitle: {
+    ...Typography.captionSm,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  gridSub: {
-    ...Typography.captionSm,
-    color: Colors.textTertiary,
-    marginTop: 2,
+  actionArrowBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.xs,
   },
+
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -902,73 +948,108 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    ...Typography.h2,
+    ...Typography.h3,
+    fontSize: 17,
     color: Colors.textPrimary,
-  },
-  sectionDate: {
-    ...Typography.captionLg,
-    color: Colors.textTertiary,
+    fontWeight: '800',
   },
   viewAllText: {
-    ...Typography.labelSm,
-    color: Colors.primaryDark,
+    ...Typography.buttonSm,
+    color: Colors.primary,
     fontWeight: '700',
   },
-  launchpadGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+
+  // Bestsellers Carousel
+  bestsellerScroll: {
     gap: 12,
-    marginBottom: 14,
+    paddingBottom: 4,
   },
-  launchpadBtn: {
-    width: '48%',
+  bestsellerCard: {
+    width: 170,
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
-    padding: 14,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.borderLight,
-    alignItems: 'center',
     ...Shadows.xs,
   },
-  launchpadIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.lg,
+  bestsellerImgWrap: {
+    width: '100%',
+    height: 120,
+    position: 'relative',
+    backgroundColor: Colors.surfaceSecondary,
+  },
+  bestsellerImg: {
+    width: '100%',
+    height: '100%',
+  },
+  bestsellerImgPlaceholder: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  launchpadLabel: {
+  ratingBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    ...Shadows.xs,
+  },
+  ratingText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  bestsellerInfo: {
+    padding: 10,
+  },
+  bestsellerName: {
     ...Typography.labelMd,
     color: Colors.textPrimary,
+    fontWeight: '700',
+    lineHeight: 16,
+    minHeight: 32,
   },
-  launchpadSub: {
+  bestsellerPack: {
     ...Typography.captionSm,
     color: Colors.textTertiary,
-    marginTop: 1,
+    marginTop: 2,
   },
-  emptyCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    marginBottom: 12,
+  bestsellerBottom: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  emptyTitle: {
-    ...Typography.h3,
+  bestsellerPrice: {
+    ...Typography.labelLg,
     color: Colors.textPrimary,
-    marginTop: 10,
+    fontWeight: '800',
   },
-  emptySubtitle: {
-    ...Typography.bodySm,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 270,
+  bestsellerMrp: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+    textDecorationLine: 'line-through',
   },
-  orderCard: {
+  addCircleBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.xs,
+  },
+
+  // Store Cards
+  storeCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.xl,
     padding: 14,
@@ -977,71 +1058,122 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     ...Shadows.xs,
   },
-  orderTop: {
+  storeCardTop: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  orderNumber: {
+  storeAvatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  storeAvatarText: {
+    ...Typography.labelLg,
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+  storeInfoCol: {
+    flex: 1,
+    gap: 2,
+  },
+  storeName: {
     ...Typography.labelLg,
     color: Colors.textPrimary,
     fontWeight: '700',
   },
-  orderStore: {
-    ...Typography.bodySm,
+  storeOwner: {
+    ...Typography.captionSm,
     color: Colors.textSecondary,
-    marginTop: 2,
   },
-  orderDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginVertical: 10,
-  },
-  orderBottom: {
+  storeLocRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 4,
+    marginTop: 1,
   },
-  orderMeta: {
-    ...Typography.captionLg,
+  storeAreaText: {
+    ...Typography.captionSm,
     color: Colors.textTertiary,
+    fontSize: 10.5,
   },
-  orderPrice: {
-    ...Typography.statSm,
+  creditPill: {
+    alignItems: 'flex-end',
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+  },
+  creditPillLabel: {
+    fontSize: 9,
+    color: Colors.textTertiary,
+    fontWeight: '600',
+  },
+  creditPillVal: {
+    fontSize: 11,
     color: Colors.textPrimary,
     fontWeight: '800',
   },
-  taskCard: {
+  storeActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  storeCheckInBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.xl,
-    padding: 14,
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    marginBottom: 8,
-    ...Shadows.xs,
-  },
-  taskIconBox: {
-    width: 36,
-    height: 36,
+    borderColor: Colors.border,
+    paddingVertical: 9,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryLight,
+  },
+  storeCheckInText: {
+    ...Typography.buttonSm,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+  },
+  storeOrderBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingVertical: 9,
+    borderRadius: Radius.md,
+    ...Shadows.xs,
   },
-  taskStore: {
-    ...Typography.labelMd,
-    color: Colors.textPrimary,
+  storeOrderText: {
+    ...Typography.buttonSm,
+    color: Colors.white,
+    fontWeight: '700',
   },
-  taskReason: {
-    ...Typography.bodySm,
-    color: Colors.textSecondary,
-    marginTop: 1,
+
+  // Live GPS Telemetry
+  gpsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 8,
   },
-  taskDate: {
+  gpsDotActive: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.secondary,
+  },
+  gpsText: {
     ...Typography.captionSm,
     color: Colors.textTertiary,
-    marginTop: 2,
+    fontSize: 10.5,
   },
 });

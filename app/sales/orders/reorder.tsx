@@ -17,13 +17,13 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ReorderScreen() {
@@ -166,7 +166,7 @@ export default function ReorderScreen() {
           <Text style={styles.sectionHeading}>Target Store Outlet</Text>
           <View style={styles.storeRow}>
             <View style={styles.storeIconBox}>
-              <StoreIcon size={20} color={Colors.primaryDark} />
+              <StoreIcon size={20} color={Colors.primary} />
             </View>
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text style={styles.storeName}>{previousOrder.store?.name}</Text>
@@ -199,7 +199,7 @@ export default function ReorderScreen() {
                   {item.quantity === 1 ? (
                     <Trash2 size={13} color={Colors.error} />
                   ) : (
-                    <Minus size={13} color={Colors.primaryDark} />
+                    <Minus size={13} color={Colors.primary} />
                   )}
                 </TouchableOpacity>
 
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepBtnAdd: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
   },
   stepVal: {
     ...Typography.statSm,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...Typography.statMd,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   adminNotice: {
     flexDirection: 'row',

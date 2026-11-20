@@ -50,12 +50,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pillActive: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
   },
   pillInactive: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
   },
   text: {
     ...Typography.labelSm,

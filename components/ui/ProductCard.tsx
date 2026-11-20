@@ -69,7 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {quantity > 0 ? (
             <View style={styles.qtyControl}>
               <TouchableOpacity style={styles.qtyBtn} onPress={onRemove} activeOpacity={0.7}>
-                <Minus size={14} color={Colors.primaryDark} />
+                <Minus size={14} color={Colors.primary} />
               </TouchableOpacity>
               <Text style={styles.qtyText}>{quantity}</Text>
               <TouchableOpacity style={styles.qtyBtnFill} onPress={onAdd} activeOpacity={0.7}>
@@ -78,7 +78,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </View>
           ) : (
             <TouchableOpacity style={styles.addBtn} onPress={onAdd} activeOpacity={0.7}>
-              <Plus size={16} color={Colors.primaryDark} />
+              <Plus size={16} color={Colors.primary} />
               <Text style={styles.addBtnText}>Add</Text>
             </TouchableOpacity>
           )}
@@ -112,29 +112,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <Text style={styles.gridName} numberOfLines={2}>{product.name}</Text>
         <Text style={styles.packInfo}>{product.pack_size}</Text>
 
-        <View style={styles.priceRow}>
-          <Text style={styles.sellingPrice}>₹{product.selling_price}</Text>
-          {discount > 0 && <Text style={styles.mrpPrice}>₹{product.mrp}</Text>}
+        <View style={styles.gridBottomRow}>
+          <View>
+            <Text style={styles.sellingPrice}>₹{product.selling_price}</Text>
+            {discount > 0 && <Text style={styles.mrpPrice}>₹{product.mrp}</Text>}
+          </View>
+
+          {quantity > 0 ? (
+            <View style={styles.gridQtyStepper}>
+              <TouchableOpacity style={styles.qtyBtnSm} onPress={onRemove} activeOpacity={0.7}>
+                <Minus size={12} color={Colors.primary} />
+              </TouchableOpacity>
+              <Text style={styles.qtyTextSm}>{quantity}</Text>
+              <TouchableOpacity style={styles.qtyBtnFillSm} onPress={onAdd} activeOpacity={0.7}>
+                <Plus size={12} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.gridAddCircle} onPress={onAdd} activeOpacity={0.8}>
+              <Plus size={16} color={Colors.white} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-
-      {/* Grid Add Button */}
-      {quantity > 0 ? (
-        <View style={styles.gridQtyRow}>
-          <TouchableOpacity style={styles.qtyBtn} onPress={onRemove} activeOpacity={0.7}>
-            <Minus size={13} color={Colors.primaryDark} />
-          </TouchableOpacity>
-          <Text style={styles.qtyText}>{quantity}</Text>
-          <TouchableOpacity style={styles.qtyBtnFill} onPress={onAdd} activeOpacity={0.7}>
-            <Plus size={13} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity style={styles.gridAddBtn} onPress={onAdd} activeOpacity={0.7}>
-          <Plus size={14} color={Colors.primaryDark} />
-          <Text style={styles.gridAddText}>Add</Text>
-        </TouchableOpacity>
-      )}
     </TouchableOpacity>
   );
 };
@@ -217,30 +217,52 @@ const styles = StyleSheet.create({
     ...Typography.labelMd,
     color: Colors.textPrimary,
   },
-  gridQtyRow: {
+  gridBottomRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginTop: 6,
   },
-  gridAddBtn: {
-    flexDirection: 'row',
+  gridAddCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    marginHorizontal: 10,
-    marginBottom: 10,
-    paddingVertical: 8,
-    backgroundColor: Colors.primaryLight,
-    borderRadius: Radius.md,
+    ...Shadows.xs,
+  },
+  gridQtyStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: Colors.border,
+    padding: 2,
+    gap: 6,
   },
-  gridAddText: {
-    ...Typography.buttonSm,
-    color: Colors.primaryDark,
+  qtyBtnSm: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyTextSm: {
+    ...Typography.labelSm,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  qtyBtnFillSm: {
+    width: 26,
+    height: 26,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ─── SHARED ─────────────────────
@@ -297,7 +319,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   qtyControl: {
     flexDirection: 'row',
@@ -318,7 +340,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

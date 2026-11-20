@@ -41,6 +41,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     padding: Spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -70,6 +71,8 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     marginTop: Spacing.lg,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.xl,
   },
 });
 

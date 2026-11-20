@@ -1,4 +1,5 @@
 import { Header } from '@/components/common/Header';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { SalesMap } from '@/components/map/SalesMap';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -100,7 +101,7 @@ export default function StoreDetailsScreen() {
           }
         />
         <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>Loading store profile...</Text>
+          <MotibaLoader size="large" message="Loading store profile..." />
         </View>
       </SafeAreaView>
     );
@@ -134,7 +135,7 @@ export default function StoreDetailsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
       >
@@ -195,7 +196,7 @@ export default function StoreDetailsScreen() {
             title="Book Order"
             variant="secondary"
             size="md"
-            icon={<ShoppingBag size={16} color={Colors.primaryDark} />}
+            icon={<ShoppingBag size={16} color={Colors.primary} />}
             onPress={() =>
               router.push({
                 pathname: '/sales/orders/create' as any,
@@ -220,8 +221,8 @@ export default function StoreDetailsScreen() {
 
           <View style={styles.infoCol}>
             <TouchableOpacity activeOpacity={0.7} onPress={callStore} style={styles.infoRow}>
-              <Phone size={15} color={Colors.primaryDark} />
-              <Text style={[styles.infoText, { color: Colors.primaryDark, fontWeight: '700' }]}>
+              <Phone size={15} color={Colors.primary} />
+              <Text style={[styles.infoText, { color: Colors.primary, fontWeight: '700' }]}>
                 {store.mobile}
               </Text>
             </TouchableOpacity>
@@ -264,7 +265,7 @@ export default function StoreDetailsScreen() {
               onPress={() => router.push(`/sales/ledger/${store.id}` as any)}
               style={styles.ledgerBtn}
             >
-              <BookOpen size={14} color={Colors.primaryDark} />
+              <BookOpen size={14} color={Colors.primary} />
               <Text style={styles.ledgerBtnText}>View Ledger</Text>
             </TouchableOpacity>
           </View>
@@ -324,7 +325,7 @@ export default function StoreDetailsScreen() {
             visits.slice(0, 5).map((visit) => (
               <View key={visit.id} style={styles.visitItem}>
                 <View style={styles.visitBullet}>
-                  <CheckCircle2 size={14} color={Colors.primaryDark} />
+                  <CheckCircle2 size={14} color={Colors.primary} />
                 </View>
                 <View style={{ marginLeft: 10, flex: 1 }}>
                   <Text style={styles.visitDate}>
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.xs,
@@ -514,7 +515,7 @@ const styles = StyleSheet.create({
   },
   ledgerBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   creditMetaRow: {
     flexDirection: 'row',
@@ -575,7 +576,7 @@ const styles = StyleSheet.create({
   },
   visitOutcome: {
     ...Typography.captionSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
     marginTop: 2,
   },

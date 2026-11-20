@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   Linking,
   Image,
 } from 'react-native';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -71,8 +71,7 @@ export default function OrderDetailsScreen() {
           }
         />
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.primaryDark} />
-          <Text style={styles.loadingText}>Fetching order information...</Text>
+          <MotibaLoader size="large" message="Fetching order information..." />
         </View>
       </SafeAreaView>
     );
@@ -103,7 +102,7 @@ export default function OrderDetailsScreen() {
               title="Try Again"
               variant="outline"
               size="md"
-              icon={<RefreshCw size={16} color={Colors.primaryDark} />}
+              icon={<RefreshCw size={16} color={Colors.primary} />}
               onPress={() => refetch()}
               style={{ marginRight: 10 }}
             />
@@ -166,7 +165,7 @@ export default function OrderDetailsScreen() {
             onRefresh={async () => {
               await refetch();
             }}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
       >
@@ -241,7 +240,7 @@ export default function OrderDetailsScreen() {
           <Text style={styles.sectionHeading}>Store Information</Text>
           <View style={styles.storeRow}>
             <View style={styles.storeIconBox}>
-              <StoreIcon size={20} color={Colors.primaryDark} />
+              <StoreIcon size={20} color={Colors.primary} />
             </View>
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text style={styles.storeName}>{order.store?.name || 'Retail Outlet'}</Text>
@@ -284,7 +283,7 @@ export default function OrderDetailsScreen() {
                   />
                 ) : (
                   <View style={styles.productPlaceholder}>
-                    <Package size={20} color={Colors.primaryDark} />
+                    <Package size={20} color={Colors.primary} />
                   </View>
                 )}
 
@@ -590,7 +589,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
@@ -681,7 +680,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...Typography.h2,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
   },
   infoGridRow: {

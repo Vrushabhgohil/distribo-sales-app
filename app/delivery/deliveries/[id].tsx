@@ -146,7 +146,7 @@ export default function DeliveryDetailsScreen() {
                 onPress={handleCallStore}
                 activeOpacity={0.7}
               >
-                <Phone size={15} color={Colors.primaryDark} />
+                <Phone size={15} color={Colors.primary} />
                 <Text style={styles.storeActionText}>Call {store.mobile}</Text>
               </TouchableOpacity>
             )}
@@ -264,7 +264,7 @@ export default function DeliveryDetailsScreen() {
             onPress={() => router.push({ pathname: '/delivery/pickup/[id]', params: { id } })}
             size="lg"
             variant="primary"
-            icon={<ArrowRight size={18} color={Colors.primaryDark} />}
+            icon={<ArrowRight size={18} color={Colors.white} />}
           />
         )}
 
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   orderNumber: {
     ...Typography.heading2,
     fontFamily: 'monospace',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 18,
     marginTop: 2,
   },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   itemCountText: {
     ...Typography.tiny,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
   storeName: {
@@ -424,12 +424,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   mapsActionBtn: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   storeActionText: {
     ...Typography.captionBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   productRow: {
     flexDirection: 'row',
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   lineTotal: {
     ...Typography.bodyBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     marginTop: 4,
     fontSize: 14,
   },
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...Typography.heading2,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 18,
   },
   repRow: {

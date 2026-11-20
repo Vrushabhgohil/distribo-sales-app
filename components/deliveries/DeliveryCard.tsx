@@ -55,7 +55,7 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({ assignment }) => {
       {/* Header: Order Number & Delivery Status */}
       <View style={styles.cardHeader}>
         <View style={styles.orderNumberRow}>
-          <Truck size={14} color={Colors.primaryDark} />
+          <Truck size={14} color={Colors.primary} />
           <Text style={styles.orderNumber}>{order.order_number}</Text>
         </View>
         <Badge status={assignment.status} />
@@ -110,7 +110,7 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({ assignment }) => {
             onPress={handleCall}
             activeOpacity={0.7}
           >
-            <Phone size={13} color={Colors.primaryDark} />
+            <Phone size={13} color={Colors.primary} />
             <Text style={styles.callButtonText}>Call Store</Text>
           </TouchableOpacity>
         ) : (
@@ -119,7 +119,7 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({ assignment }) => {
 
         <View style={styles.viewDetailAction}>
           <Text style={styles.viewDetailText}>View Delivery</Text>
-          <ChevronRight size={14} color={Colors.primaryDark} />
+          <ChevronRight size={14} color={Colors.primary} />
         </View>
       </View>
     </TouchableOpacity>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   amountValue: {
     ...Typography.bodyBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 13,
   },
   metricDivider: {
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   callButtonText: {
     ...Typography.tiny,
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   viewDetailAction: {
     flexDirection: 'row',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   viewDetailText: {
     ...Typography.captionBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
 });
 

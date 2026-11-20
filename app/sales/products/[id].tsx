@@ -19,6 +19,7 @@ import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme'
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/common/Header';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { dataService } from '@/services/data-service';
 
@@ -44,7 +45,7 @@ export default function ProductDetailScreen() {
           }
         />
         <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>Loading product master...</Text>
+          <MotibaLoader size="large" message="Loading product master..." />
         </View>
       </SafeAreaView>
     );
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
   brandText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   productTitle: {
     ...Typography.h2,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
   },
   distPrice: {
     ...Typography.captionLg,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
     marginTop: 2,
   },

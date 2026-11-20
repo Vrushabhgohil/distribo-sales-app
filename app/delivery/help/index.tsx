@@ -107,7 +107,7 @@ export default function HelpScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Support Header Banner */}
         <View style={styles.bannerCard}>
-          <HelpCircle size={28} color={Colors.primaryDark} />
+          <HelpCircle size={28} color={Colors.primary} />
           <Text style={styles.bannerTitle}>Delivery Pilot Operations Guide</Text>
           <Text style={styles.bannerSubtitle}>
             Step-by-step instructions for warehouse dispatch, transit navigation, and store drop execution.
@@ -129,7 +129,7 @@ export default function HelpScreen() {
                 >
                   <Text style={styles.questionText}>{faq.question}</Text>
                   {isExpanded ? (
-                    <ChevronUp size={18} color={Colors.primaryDark} />
+                    <ChevronUp size={18} color={Colors.primary} />
                   ) : (
                     <ChevronDown size={18} color={Colors.textSecondary} />
                   )}
@@ -158,7 +158,7 @@ export default function HelpScreen() {
               onPress={handleCallSupport}
               variant="primary"
               size="md"
-              icon={<Phone size={16} color={Colors.primaryDark} />}
+              icon={<Phone size={16} color="#FFF" />}
               style={{ flex: 1 }}
             />
           </View>

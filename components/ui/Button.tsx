@@ -105,7 +105,7 @@ export const Button: React.FC<ButtonProps> = ({
         styles.base,
         v.container,
         s.container,
-        !fullWidth && { alignSelf: 'flex-start' },
+        fullWidth ? { width: '100%' } : { alignSelf: 'center' },
         isDisabled && styles.disabled,
         style,
       ]}

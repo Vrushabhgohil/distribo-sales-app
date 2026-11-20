@@ -21,7 +21,6 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -29,6 +28,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateOrderScreen() {
@@ -240,7 +240,7 @@ export default function CreateOrderScreen() {
                 >
                   <StoreIcon
                     size={15}
-                    color={isSelected ? Colors.white : Colors.primaryDark}
+                    color={isSelected ? Colors.white : Colors.primary}
                   />
                   <Text
                     style={[
@@ -262,7 +262,7 @@ export default function CreateOrderScreen() {
                 {selectedStore.address}, {selectedStore.area}
               </Text>
               <View style={styles.creditRow}>
-                <CreditCard size={13} color={Colors.primaryDark} />
+                <CreditCard size={13} color={Colors.primary} />
                 <Text style={styles.creditText}>
                   Credit Limit: ₹{selectedStore.credit_limit?.toLocaleString('en-IN') || '0'} • Terms: {selectedStore.payment_terms || 'Net 30'}
                 </Text>
@@ -310,7 +310,7 @@ export default function CreateOrderScreen() {
                         onPress={() => updateQuantity(product.id, qty - 1, minQty)}
                         style={styles.stepBtn}
                       >
-                        <Minus size={14} color={Colors.primaryDark} />
+                        <Minus size={14} color={Colors.primary} />
                       </TouchableOpacity>
                       <Text style={styles.stepVal}>{qty}</Text>
                       <TouchableOpacity
@@ -327,7 +327,7 @@ export default function CreateOrderScreen() {
                       onPress={() => updateQuantity(product.id, minQty, minQty)}
                       style={styles.addBtn}
                     >
-                      <Plus size={14} color={Colors.primaryDark} />
+                      <Plus size={14} color={Colors.primary} />
                       <Text style={styles.addBtnText}>Add</Text>
                     </TouchableOpacity>
                   )}
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   stepNumText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   sectionTitle: {
     ...Typography.h3,
@@ -528,8 +528,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   storePillActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   storePillText: {
     ...Typography.labelSm,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   },
   creditText: {
     ...Typography.captionSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
   productList: {
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   prodPrice: {
     ...Typography.captionLg,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepBtnAdd: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
   },
   stepVal: {
     ...Typography.statSm,
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   cartItemRow: {
     flexDirection: 'row',
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   },
   modalOrderNumber: {
     ...Typography.statSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     marginTop: 6,
     marginBottom: 8,
   },

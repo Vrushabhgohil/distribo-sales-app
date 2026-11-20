@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Colors } from '@/constants/theme';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 
 export default function DeliveryLayout() {
   const { userRole, loading } = useAuth();
@@ -24,11 +24,7 @@ export default function DeliveryLayout() {
   }, [userRole, loading, router]);
 
   if (loading || userRole !== 'delivery_person') {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primaryDark} />
-      </View>
-    );
+    return <MotibaLoader fullscreen message="Loading Delivery Dispatch..." />;
   }
 
   return (
@@ -45,8 +41,8 @@ export default function DeliveryLayout() {
         options={{
           headerShown: true,
           headerTitle: 'Delivery Details',
-          headerStyle: { backgroundColor: Colors.card },
-          headerTintColor: Colors.primaryDark,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.primary,
           headerShadowVisible: false,
         }}
       />
@@ -55,8 +51,8 @@ export default function DeliveryLayout() {
         options={{
           headerShown: true,
           headerTitle: 'Warehouse Pickup',
-          headerStyle: { backgroundColor: Colors.card },
-          headerTintColor: Colors.primaryDark,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.primary,
           headerShadowVisible: false,
         }}
       />
@@ -65,8 +61,8 @@ export default function DeliveryLayout() {
         options={{
           headerShown: true,
           headerTitle: 'Complete Delivery',
-          headerStyle: { backgroundColor: Colors.card },
-          headerTintColor: Colors.primaryDark,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.primary,
           headerShadowVisible: false,
         }}
       />
@@ -82,20 +78,11 @@ export default function DeliveryLayout() {
         options={{
           headerShown: true,
           headerTitle: 'Help & FAQs',
-          headerStyle: { backgroundColor: Colors.card },
-          headerTintColor: Colors.primaryDark,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.primary,
           headerShadowVisible: false,
         }}
       />
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
-  },
-});

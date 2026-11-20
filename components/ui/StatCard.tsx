@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     ...Shadows.xs,
   },
   highlightCard: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   compactCard: {
     padding: 12,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   highlightLabel: {
-    color: '#FFF8E9',
+    color: Colors.warmIvory,
     opacity: 0.95,
   },
   subtitle: {

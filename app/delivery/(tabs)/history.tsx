@@ -122,13 +122,16 @@ export default function DeliveryHistoryScreen() {
       <FlatList
         data={historyDeliveries}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          historyDeliveries.length === 0 && styles.listContentEmpty,
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
-            tintColor={Colors.primaryDark}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
           />
         }
         ListEmptyComponent={
@@ -217,8 +220,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   filterPillActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   filterText: {
     ...Typography.captionBold,
@@ -231,6 +234,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

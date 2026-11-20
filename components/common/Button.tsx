@@ -105,7 +105,7 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'outline' ? Colors.primaryDark : '#FFFFFF'}
+          color={variant === 'outline' ? Colors.primary : '#FFFFFF'}
         />
       ) : (
         <>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dark: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
   },
   darkText: {
     color: Colors.white,

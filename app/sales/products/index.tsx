@@ -25,6 +25,7 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryPill } from '@/components/ui/CategoryPill';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { Button } from '@/components/ui/Button';
 import { dataService } from '@/services/data-service';
 import { Product } from '@/types';
@@ -210,13 +211,16 @@ export default function ProductsScreen() {
         keyExtractor={(item) => item.id}
         numColumns={layoutMode === 'grid' ? 2 : 1}
         columnWrapperStyle={layoutMode === 'grid' ? styles.gridRow : undefined}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredProducts.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         renderItem={({ item }) => (
@@ -230,7 +234,9 @@ export default function ProductsScreen() {
           />
         )}
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Loading product catalog..." />
+          ) : (
             <EmptyState
               title={searchQuery ? 'No matching FMCG products' : 'No products available'}
               description={
@@ -239,7 +245,7 @@ export default function ProductsScreen() {
                   : 'Product master items will show here once cataloged in the Admin Portal.'
               }
             />
-          ) : undefined
+          )
         }
       />
 
@@ -298,7 +304,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cartBtn: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     width: 40,
     height: 40,
     borderRadius: Radius.md,
@@ -340,6 +346,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
     paddingBottom: 90,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   gridRow: {
     justifyContent: 'space-between',

@@ -46,7 +46,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       </View>
       {showFilter && onFilterPress && (
         <TouchableOpacity onPress={onFilterPress} style={styles.filterBtn} activeOpacity={0.7}>
-          <SlidersHorizontal size={18} color={Colors.primaryDark} />
+          <SlidersHorizontal size={18} color={Colors.primary} />
         </TouchableOpacity>
       )}
     </View>
@@ -63,13 +63,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: Radius.lg,
-    paddingHorizontal: 14,
-    height: 46,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    paddingHorizontal: 16,
+    height: 48,
     gap: 10,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.border,
   },
   input: {
     flex: 1,
@@ -77,14 +77,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   filterBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.primaryLight,
+    width: 48,
+    height: 48,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: Colors.border,
   },
 });
 

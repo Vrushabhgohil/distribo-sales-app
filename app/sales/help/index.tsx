@@ -8,8 +8,8 @@ import {
   Linking,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -231,7 +231,7 @@ export default function HelpScreen() {
 
         {/* Section A: FAQs */}
         <View style={styles.sectionHeaderRow}>
-          <HelpCircle size={18} color={Colors.primaryDark} />
+          <HelpCircle size={18} color={Colors.primary} />
           <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
         </View>
 
@@ -248,7 +248,7 @@ export default function HelpScreen() {
                   >
                     <Text style={styles.faqQuestion}>{faq.question}</Text>
                     {isExpanded ? (
-                      <ChevronUp size={18} color={Colors.primaryDark} />
+                      <ChevronUp size={18} color={Colors.primary} />
                     ) : (
                       <ChevronDown size={18} color={Colors.textTertiary} />
                     )}
@@ -270,7 +270,7 @@ export default function HelpScreen() {
 
         {/* Section B: How to Use the Application */}
         <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
-          <BookOpen size={18} color={Colors.primaryDark} />
+          <BookOpen size={18} color={Colors.primary} />
           <Text style={styles.sectionTitle}>How to Use the Application</Text>
         </View>
 
@@ -280,7 +280,7 @@ export default function HelpScreen() {
             <View key={idx} style={styles.guideCard}>
               <View style={styles.guideHeader}>
                 <View style={styles.guideIconBox}>
-                  <IconComp size={18} color={Colors.primaryDark} />
+                  <IconComp size={18} color={Colors.primary} />
                 </View>
                 <Text style={styles.guideTitle}>{guide.title}</Text>
               </View>
@@ -300,7 +300,7 @@ export default function HelpScreen() {
 
         {/* Section C: Contact Support */}
         <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
-          <Phone size={18} color={Colors.primaryDark} />
+          <Phone size={18} color={Colors.primary} />
           <Text style={styles.sectionTitle}>Contact Support</Text>
         </View>
 
@@ -336,7 +336,7 @@ export default function HelpScreen() {
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.contactLabel}>Support Email</Text>
-              <Text style={styles.contactVal}>support@aarvifmcg.com</Text>
+              <Text style={styles.contactVal}>support@motibafoods.com</Text>
             </View>
             <Text style={styles.contactActionText}>Email</Text>
           </TouchableOpacity>
@@ -347,7 +347,7 @@ export default function HelpScreen() {
             title="Report an Issue"
             variant="outline"
             size="lg"
-            icon={<MessageSquare size={16} color={Colors.primaryDark} />}
+            icon={<MessageSquare size={16} color={Colors.primary} />}
             onPress={() => setIssueModalVisible(true)}
             style={{ marginTop: 12 }}
           />
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     ...Typography.captionSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
     fontSize: 10,
   },
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   },
   contactActionText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '700',
   },
   contactDivider: {

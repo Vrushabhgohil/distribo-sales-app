@@ -9,7 +9,7 @@ import {
   CalendarClock,
   User,
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
+import { Colors, Shadows } from '@/constants/theme';
 
 interface TabItemProps {
   IconComponent: any;
@@ -20,18 +20,11 @@ interface TabItemProps {
 const CustomTabItem: React.FC<TabItemProps> = ({ IconComponent, title, focused }) => {
   return (
     <View style={styles.tabItemWrapper}>
-      <View
-        style={[
-          styles.iconPill,
-          focused && styles.iconPillActive,
-        ]}
-      >
-        <IconComponent
-          size={20}
-          color={focused ? Colors.primaryDark : Colors.textTertiary}
-          strokeWidth={focused ? 2.4 : 1.8}
-        />
-      </View>
+      <IconComponent
+        size={22}
+        color={focused ? Colors.primary : Colors.textTertiary}
+        strokeWidth={focused ? 2.3 : 1.8}
+      />
       <Text
         numberOfLines={1}
         style={[
@@ -54,6 +47,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textTertiary,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
@@ -126,25 +121,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 64,
-  },
-  iconPill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 44,
-    height: 30,
-    borderRadius: Radius.full,
-    marginBottom: 3,
-  },
-  iconPillActive: {
-    backgroundColor: Colors.primaryLight,
+    paddingTop: 3,
+    gap: 3,
   },
   tabLabel: {
-    ...Typography.captionSm,
     fontSize: 10.5,
     textAlign: 'center',
   },
   tabLabelActive: {
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
   },
   tabLabelInactive: {

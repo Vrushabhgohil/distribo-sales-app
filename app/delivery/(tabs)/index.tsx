@@ -82,8 +82,8 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
-            tintColor={Colors.primaryDark}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
           />
         }
       >
@@ -182,7 +182,7 @@ export default function DashboardScreen() {
               activeOpacity={0.7}
             >
               <Text style={styles.viewAllText}>View All</Text>
-              <ArrowRight size={14} color={Colors.primaryDark} />
+              <ArrowRight size={14} color={Colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -190,7 +190,7 @@ export default function DashboardScreen() {
             <LoadingIndicator message="Loading today's assigned deliveries..." />
           ) : activeDeliveries.length === 0 ? (
             <EmptyState
-              icon={<Truck size={36} color={Colors.primaryDark} />}
+              icon={<Truck size={36} color={Colors.primary} />}
               title="No Active Deliveries"
               description="You have no pending pickups or deliveries in transit right now. Newly assigned orders from Admin will appear here automatically."
               actionTitle="View History"
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     ...Typography.captionBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
 });
 

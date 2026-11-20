@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   boldName: {
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   vehicleInfo: {
     ...Typography.caption,

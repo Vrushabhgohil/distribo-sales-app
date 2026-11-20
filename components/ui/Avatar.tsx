@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
 });
 

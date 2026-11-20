@@ -8,7 +8,7 @@ import {
   ViewStyle,
   Platform,
 } from 'react-native';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -111,9 +111,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
-    borderColor: Colors.primaryDark,
+    borderColor: Colors.primary,
     backgroundColor: Colors.white,
     borderWidth: 1.5,
+    ...Shadows.sm,
   },
   inputWrapperError: {
     borderColor: Colors.error,

@@ -77,15 +77,15 @@ export default function ForgotPasswordScreen() {
             </TouchableOpacity>
 
             <View style={styles.verifiedBadge}>
-              <ShieldCheck size={13} color={Colors.primaryDark} />
-              <Text style={styles.verifiedText}>DISTRO SALES</Text>
+              <ShieldCheck size={13} color={Colors.primary} />
+              <Text style={styles.verifiedText}>MOTIBA SALES</Text>
             </View>
           </View>
 
           {/* Header */}
           <View style={styles.headerSection}>
             <View style={styles.iconCircle}>
-              <KeyRound size={28} color={Colors.primaryDark} />
+              <KeyRound size={28} color={Colors.primary} />
             </View>
             <Text style={styles.appTitle}>Password Recovery</Text>
             <Text style={styles.appSubtitle}>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.8,
   },
   headerSection: {
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   returnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   footerNote: {
     ...Typography.captionSm,

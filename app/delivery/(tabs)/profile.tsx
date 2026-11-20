@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -98,7 +98,7 @@ export default function ProfileScreen() {
             <Text style={styles.pilotId}>ID: {deliveryPerson?.employee_id || 'EMP-D001'}</Text>
 
             <View style={styles.vehicleRow}>
-              <Truck size={14} color={Colors.primaryDark} />
+              <Truck size={14} color={Colors.primary} />
               <Text style={styles.vehicleText}>
                 {deliveryPerson?.vehicle_type || 'Mini Truck'} •{' '}
                 <Text style={styles.vehiclePlate}>
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <View style={styles.settingLeft}>
-              <RefreshCw size={18} color={isOnline ? Colors.primaryDark : Colors.danger} />
+              <RefreshCw size={18} color={isOnline ? Colors.primary : Colors.danger} />
               <View>
                 <Text style={styles.settingTitle}>Offline Sync Engine</Text>
                 <Text style={styles.settingDesc}>
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   avatarLargeText: {
     ...Typography.heading2,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontSize: 20,
   },
   pilotInfo: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   vehiclePlate: {
     fontFamily: 'monospace',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   sectionCard: {
     backgroundColor: Colors.card,

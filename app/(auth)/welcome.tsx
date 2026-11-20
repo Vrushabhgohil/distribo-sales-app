@@ -30,7 +30,7 @@ const HIGHLIGHT_FEATURES = [
     subtitle: 'Automated GPS route tracking & store geofenced check-in',
     tag: 'FIELD GPS',
     tagBg: Colors.primaryLight,
-    tagColor: Colors.primaryDark,
+    tagColor: Colors.primary,
   },
   {
     icon: ShoppingBag,
@@ -71,7 +71,7 @@ export default function WelcomeScreen() {
               />
             </View>
             <View style={styles.verifiedTag}>
-              <ShieldCheck size={13} color={Colors.primaryDark} />
+              <ShieldCheck size={13} color={Colors.primary} />
               <Text style={styles.verifiedTagText}>MOTIBA SALES</Text>
             </View>
           </View>
@@ -109,7 +109,7 @@ export default function WelcomeScreen() {
                   >
                     <IconComp
                       size={22}
-                      color={isSelected ? Colors.white : Colors.primaryDark}
+                      color={isSelected ? Colors.white : Colors.primary}
                     />
                   </View>
                   <View style={[styles.pillBadge, { backgroundColor: feat.tagBg }]}>
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   verifiedTagText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.8,
   },
   headline: {
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconCircleActive: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
   },
   iconCircleInactive: {
     backgroundColor: Colors.primaryLight,

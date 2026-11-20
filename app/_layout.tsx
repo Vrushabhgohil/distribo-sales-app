@@ -8,7 +8,10 @@ import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
 import { LocationTrackerProvider } from '@/features/location/LocationTrackerContext';
 import { OfflineSyncProvider } from '@/features/offline/OfflineSyncContext';
 import { Colors } from '@/constants/theme';
-import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { useFonts } from 'expo-font';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
+import { CustomAlertProvider } from '@/components/ui/CustomAlert';
 
 function RouteGuard() {
   const { userRole, loading } = useAuth();
@@ -41,11 +44,7 @@ function RouteGuard() {
   }, [userRole, loading, segments, router]);
 
   if (loading) {
-    return (
-      <View style={styles.splashLoading}>
-        <ActivityIndicator size="large" color={Colors.primaryDark} />
-      </View>
-    );
+    return <MotibaLoader fullscreen message="Initializing Motiba Sales Suite..." />;
   }
 
   return (
@@ -68,14 +67,22 @@ function RouteGuard() {
 }
 
 export default function RootLayout() {
+  useFonts({
+    'PlaywriteFRModerne': require('../assets/fonts/PlaywriteFRModerne.ttf'),
+    'Outfit-Bold': require('../assets/fonts/Outfit-Bold.ttf'),
+    'DMSans-Bold': require('../assets/fonts/DMSans-Bold.ttf'),
+  });
+
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <OfflineSyncProvider>
             <LocationTrackerProvider>
-              <StatusBar style="dark" />
-              <RouteGuard />
+              <CustomAlertProvider>
+                <StatusBar style="dark" />
+                <RouteGuard />
+              </CustomAlertProvider>
             </LocationTrackerProvider>
           </OfflineSyncProvider>
         </AuthProvider>
@@ -83,12 +90,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  splashLoading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
-  },
-});

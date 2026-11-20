@@ -20,7 +20,6 @@ import {
   ShoppingBag,
 } from 'lucide-react-native';
 import {
-  Alert,
   Image,
   Platform,
   ScrollView,
@@ -29,6 +28,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
             style={styles.helpHeaderBtn}
             activeOpacity={0.7}
           >
-            <HelpCircle size={20} color={Colors.primaryDark} />
+            <HelpCircle size={20} color={Colors.primary} />
           </TouchableOpacity>
         }
       />
@@ -98,7 +98,7 @@ export default function ProfileScreen() {
 
             <View style={{ flex: 1, marginLeft: 14 }}>
               <View style={styles.roleBadge}>
-                <ShieldCheck size={12} color={Colors.primaryDark} />
+                <ShieldCheck size={12} color={Colors.primary} />
                 <Text style={styles.roleBadgeText}>SALES REPRESENTATIVE</Text>
               </View>
 
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     ...Typography.captionSm,
     fontSize: 9,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.5,
   },
   nameText: {

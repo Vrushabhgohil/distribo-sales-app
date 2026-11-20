@@ -14,13 +14,13 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
@@ -86,7 +86,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.cardTitleRow}>
             <View style={styles.iconBox}>
-              <Database size={18} color={Colors.primaryDark} />
+              <Database size={18} color={Colors.primary} />
             </View>
             <Text style={styles.cardTitle}>Offline Data & Local Cache</Text>
           </View>

@@ -5,11 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
-  Alert,
   TouchableOpacity,
   Linking,
   Platform,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -238,7 +238,7 @@ export default function DeliveryExecutionScreen() {
                 onPress={handleCallStore}
                 activeOpacity={0.7}
               >
-                <Phone size={15} color={Colors.primaryDark} />
+                <Phone size={15} color={Colors.primary} />
                 <Text style={styles.actionBtnText}>Call Store</Text>
               </TouchableOpacity>
             )}
@@ -268,7 +268,7 @@ export default function DeliveryExecutionScreen() {
             onPress={handleMarkAllFull}
             activeOpacity={0.7}
           >
-            <CheckSquare size={14} color={Colors.primaryDark} />
+            <CheckSquare size={14} color={Colors.primary} />
             <Text style={styles.markAllText}>Mark All Full</Text>
           </TouchableOpacity>
         </View>
@@ -337,8 +337,8 @@ export default function DeliveryExecutionScreen() {
           onPress={handleSubmitDelivery}
           loading={submitting}
           size="lg"
-          variant={isPartial ? 'primary' : 'dark'}
-          icon={<CheckCircle size={18} color={isPartial ? Colors.primaryDark : '#FFF'} />}
+          variant="primary"
+          icon={<CheckCircle size={18} color="#FFF" />}
         />
       </View>
     </SafeAreaView>
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     ...Typography.tiny,
     fontFamily: 'monospace',
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   addressBox: {
     backgroundColor: Colors.background,
@@ -426,12 +426,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   mapsBtn: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   actionBtnText: {
     ...Typography.captionBold,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   markAllText: {
     ...Typography.tiny,
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   partialAlertCard: {
     backgroundColor: Colors.goldLight,
@@ -542,12 +542,12 @@ const styles = StyleSheet.create({
   },
   boldUnit: {
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   statusIndicator: {
     ...Typography.tiny,
     fontWeight: '700',
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
 });
 

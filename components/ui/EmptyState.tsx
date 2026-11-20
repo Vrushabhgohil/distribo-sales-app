@@ -35,7 +35,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           size="md"
           fullWidth={false}
           onPress={onAction}
-          style={{ marginTop: 16, paddingHorizontal: 24 }}
+          style={{ marginTop: 16, paddingHorizontal: 28, alignSelf: 'center' }}
         />
       )}
     </View>
@@ -44,7 +44,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 48,
     paddingHorizontal: 32,
   },

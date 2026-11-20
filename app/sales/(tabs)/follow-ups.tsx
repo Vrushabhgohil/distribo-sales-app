@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { FollowUp, Store } from '@/types';
@@ -173,7 +174,7 @@ export default function FollowUpsScreen() {
               onPress={() => completeMutation.mutate(item.id)}
               style={styles.doneBtn}
             >
-              <CheckCircle2 size={14} color={Colors.primaryDark} />
+              <CheckCircle2 size={14} color={Colors.primary} />
               <Text style={styles.doneBtnText}>Mark Done</Text>
             </TouchableOpacity>
           ) : (
@@ -233,17 +234,22 @@ export default function FollowUpsScreen() {
         data={filteredFollowUps}
         keyExtractor={(item) => item.id}
         renderItem={renderFollowUpItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredFollowUps.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Loading beat follow-ups..." />
+          ) : (
             <EmptyState
               icon={<CalendarClock size={42} color={Colors.textTertiary} />}
               title={`No ${activeTab.toLowerCase()} tasks`}
@@ -256,7 +262,7 @@ export default function FollowUpsScreen() {
                 setIsModalOpen(true);
               }}
             />
-          ) : undefined
+          )
         }
       />
 
@@ -396,7 +402,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   addBtn: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     width: 42,
     height: 42,
     borderRadius: Radius.lg,
@@ -418,19 +424,24 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabItemActive: {
-    borderBottomColor: Colors.primaryDark,
+    borderBottomColor: Colors.primary,
   },
   tabText: {
     ...Typography.labelSm,
     color: Colors.textSecondary,
   },
   tabTextActive: {
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
   },
   listContent: {
     padding: 18,
     paddingBottom: 40,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
     backgroundColor: Colors.surface,
@@ -494,7 +505,7 @@ const styles = StyleSheet.create({
   },
   doneBtnText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   completedTag: {
     flexDirection: 'row',
@@ -553,8 +564,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   storeOptionPillActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   storeOptionText: {
     ...Typography.labelSm,
@@ -579,8 +590,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   priorityOptionActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   priorityOptionText: {
     ...Typography.captionSm,

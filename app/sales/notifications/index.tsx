@@ -1,5 +1,6 @@
 import { Header } from '@/components/common/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { dataService } from '@/services/data-service';
 import { NotificationItem } from '@/types';
@@ -139,7 +140,7 @@ export default function NotificationsScreen() {
               onPress={() => markAllReadMutation.mutate()}
               style={styles.markAllBtn}
             >
-              <CheckCheck size={16} color={Colors.primaryDark} />
+              <CheckCheck size={16} color={Colors.primary} />
               <Text style={styles.markAllText}>Mark Read</Text>
             </TouchableOpacity>
           ) : null
@@ -150,23 +151,28 @@ export default function NotificationsScreen() {
         data={notifications}
         keyExtractor={(item) => item.id}
         renderItem={renderNotification}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          notifications.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Checking for notifications..." />
+          ) : (
             <EmptyState
               icon={<Bell size={42} color={Colors.textTertiary} />}
               title="All Caught Up"
               description="You have no notifications or admin dispatch updates right now."
             />
-          ) : undefined
+          )
         }
       />
     </SafeAreaView>
@@ -197,11 +203,16 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     ...Typography.buttonSm,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   listContent: {
     padding: 18,
     paddingBottom: 40,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notifCard: {
     backgroundColor: Colors.surface,

@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -250,7 +250,7 @@ export default function StoreVisitScreen() {
         <View style={styles.card}>
           <View style={styles.storeRow}>
             <View style={styles.storeIconBox}>
-              <StoreIcon size={22} color={Colors.primaryDark} />
+              <StoreIcon size={22} color={Colors.primary} />
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={styles.storeName}>{store?.name || 'Retail Outlet'}</Text>
@@ -264,7 +264,7 @@ export default function StoreVisitScreen() {
         {!activeVisit && (
           <View style={styles.card}>
             <View style={styles.readyIconBox}>
-              <Navigation size={32} color={Colors.primaryDark} />
+              <Navigation size={32} color={Colors.primary} />
             </View>
             <Text style={styles.readyTitle}>Check In to Store</Text>
             <Text style={styles.readyDesc}>
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   timerCard: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     borderRadius: Radius['2xl'],
     padding: 24,
     alignItems: 'center',
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   },
   timerStartedAt: {
     ...Typography.captionSm,
-    color: '#FFF8E9',
+    color: Colors.warmIvory,
     opacity: 0.95,
     fontWeight: '500',
   },
@@ -478,13 +478,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   orderPromptTitle: {
     ...Typography.labelMd,
-    color: Colors.primaryDark,
+    color: Colors.primary,
   },
   orderPromptSub: {
     ...Typography.captionSm,
@@ -516,8 +516,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   outcomeChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   outcomeText: {
     ...Typography.captionSm,

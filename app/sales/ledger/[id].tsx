@@ -1,6 +1,7 @@
 import { Header } from '@/components/common/Header';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { Input } from '@/components/ui/Input';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -18,7 +19,6 @@ import {
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
-  Alert,
   FlatList,
   Modal,
   RefreshControl,
@@ -28,6 +28,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PAYMENT_MODES = ['Cash', 'UPI / QR', 'Cheque', 'Bank Transfer'];
@@ -212,7 +213,7 @@ export default function CustomerLedgerScreen() {
             variant="secondary"
             size="sm"
             fullWidth={false}
-            icon={<Plus size={14} color={Colors.primaryDark} />}
+            icon={<Plus size={14} color={Colors.primary} />}
             onPress={() => setIsPaymentModalOpen(true)}
           />
         </View>
@@ -248,16 +249,18 @@ export default function CustomerLedgerScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primaryDark]}
+            colors={[Colors.primary]}
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <MotibaLoader size="medium" message="Loading store ledger..." />
+          ) : (
             <EmptyState
               title="No Ledger Transactions"
               description="Orders and payment collections logged for this retail outlet will appear here."
             />
-          ) : undefined
+          )
         }
       />
 
@@ -355,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addPaymentBtn: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     width: 42,
     height: 42,
     borderRadius: Radius.lg,
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   heroCard: {
-    backgroundColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
     marginHorizontal: 18,
     marginTop: 14,
     borderRadius: Radius['2xl'],
@@ -389,7 +392,7 @@ const styles = StyleSheet.create({
   },
   creditLimitText: {
     ...Typography.captionSm,
-    color: '#FFF8E9',
+    color: Colors.warmIvory,
     opacity: 0.95,
     fontWeight: '500',
     marginTop: 2,
@@ -409,8 +412,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   filterChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   filterChipText: {
     ...Typography.captionSm,
@@ -515,8 +518,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
   },
   modeChipActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   modeChipText: {
     ...Typography.captionSm,

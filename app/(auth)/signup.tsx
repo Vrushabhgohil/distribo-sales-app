@@ -112,8 +112,8 @@ export default function SignUpScreen() {
             </TouchableOpacity>
 
             <View style={styles.verifiedBadge}>
-              <ShieldCheck size={13} color={Colors.primaryDark} />
-              <Text style={styles.verifiedText}>DISTRO SALES</Text>
+              <ShieldCheck size={13} color={Colors.primary} />
+              <Text style={styles.verifiedText}>MOTIBA SALES</Text>
             </View>
           </View>
 
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     ...Typography.captionSm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     letterSpacing: 0.8,
   },
   headerSection: {
@@ -408,8 +408,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkboxActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   termsText: {
     flex: 1,
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   linkText: {
     ...Typography.bodySm,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.primary,
     textDecorationLine: 'underline',
   },
 });

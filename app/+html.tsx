@@ -19,6 +19,14 @@ export default function Root({ children }: { children: ReactNode }) {
         */}
         <ScrollViewStyleReset />
 
+        {/* Google Fonts: Playwrite FR Moderne, Outfit, DM Sans, and Plus Jakarta Sans */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Playwrite+FR+Moderne:wght@100..400&family=DM+Sans:ital,opsz,wght@0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
         {/* Add any additional <head> elements that you want globally available on web... */}
@@ -29,6 +37,15 @@ export default function Root({ children }: { children: ReactNode }) {
 }
 
 const responsiveBackground = `
+*, *:focus, *:focus-visible {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+a, button, [role="button"], [role="tab"] {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  text-decoration: none;
+}
 html, body {
   min-height: 100vh;
   background-color: #FAF7F2;

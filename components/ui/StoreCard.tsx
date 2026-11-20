@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     ...Typography.labelLg,
-    color: Colors.primaryDark,
+    color: Colors.primary,
     fontWeight: '800',
   },
   infoCol: {
