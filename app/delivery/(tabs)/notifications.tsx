@@ -40,7 +40,7 @@ export default function NotificationsScreen() {
   };
 
   const handleMarkAllRead = async () => {
-    await notificationService.markAllAsRead(deliveryPerson?.user_id || undefined);
+    await notificationService.markAllAsRead();
     refetch();
   };
 

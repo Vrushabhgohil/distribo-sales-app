@@ -373,86 +373,38 @@ export const dataService = {
 
   async createOrder(params: {
     storeId: string;
-    salespersonId: string;
-    items: { productId: string; quantity: number; unitPrice: number }[];
+    salespersonId?: string;
+    items: { productId: string; quantity: number; unitPrice?: number }[];
     notes?: string;
+    idempotencyKey?: string;
   }): Promise<{ success: boolean; data?: Order; error?: string }> {
     try {
       if (!params.items || params.items.length === 0) {
         return { success: false, error: 'Order must contain at least one product.' };
       }
 
-      // Generate order number: ORD-YYYYMMDD-XXXX
-      const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-      const orderNumber = `ORD-${datePart}-${randomSuffix}`;
-
-      // Calculate total amount
-      const totalAmount = params.items.reduce(
-        (sum, item) => sum + item.quantity * item.unitPrice,
-        0
-      );
-
-      // Step 1: Insert Order header with pending status (MANDATORY ADMIN CONFIRMATION)
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([
-          {
-            order_number: orderNumber,
-            store_id: params.storeId,
-            salesperson_id: params.salespersonId,
-            order_date: new Date().toISOString().split('T')[0],
-            discount_amount: 0,
-            tax_amount: 0,
-            total_amount: totalAmount,
-            notes: params.notes || null,
-            status: 'pending', // Strictly Pending Admin Confirmation
-          },
-        ])
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Step 2: Insert order items atomically
-      const itemsToInsert = params.items.map((item) => ({
-        order_id: order.id,
-        product_id: item.productId,
-        quantity: item.quantity,
-        delivered_quantity: 0,
-        unit_price: item.unitPrice,
-        total_price: item.quantity * item.unitPrice,
+      // Delegate directly to the atomic, server-enforced create_order RPC
+      // All prices, unique order numbers, totals, and notifications are generated server-side.
+      const payloadItems = params.items.map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(itemsToInsert);
+      const { data, error } = await supabase.rpc('create_order', {
+        p_store_id: params.storeId,
+        p_items: payloadItems,
+        p_notes: params.notes || null,
+        p_idempotency_key: params.idempotencyKey || null,
+      });
 
-      if (itemsError) {
-        // Rollback order header if items fail
-        await supabase.from('orders').delete().eq('id', order.id);
-        throw itemsError;
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      // Step 3: Insert in-app notification for order booking
-      try {
-        await supabase.from('notifications').insert([
-          {
-            title: 'New Order Booked',
-            message: `Order ${orderNumber} booked and awaiting Admin confirmation.`,
-            type: 'order',
-            reference_type: 'orders',
-            reference_id: order.id,
-            is_read: false,
-          },
-        ]);
-      } catch (notifErr) {
-        console.warn('Notification log skipped:', notifErr);
-      }
-
-      return { success: true, data: order as Order };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to submit order for Admin confirmation.' };
+      return { success: true, data: data as unknown as Order };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit order for Admin confirmation.';
+      return { success: false, error: message };
     }
   },
 
@@ -484,47 +436,32 @@ export const dataService = {
     referenceNumber?: string;
     notes?: string;
     salespersonId?: string;
+    idempotencyKey?: string;
   }): Promise<{ success: boolean; data?: LedgerTransaction; error?: string }> {
     try {
-      // Get previous running balance
-      const { data: latestTxn } = await supabase
-        .from('ledger_transactions')
-        .select('running_balance')
-        .eq('store_id', params.storeId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (!params.amount || params.amount <= 0) {
+        return { success: false, error: 'Payment amount must be greater than zero.' };
+      }
 
-      const prevBal = latestTxn?.running_balance || 0;
-      const newBal = Math.max(0, prevBal - params.amount);
-
-      const desc = `Payment Collection (${params.paymentMode.toUpperCase()})${
-        params.referenceNumber ? ` • Ref: ${params.referenceNumber}` : ''
-      }${params.notes ? ` • ${params.notes}` : ''}`;
-
-      const { data, error } = await supabase
-        .from('ledger_transactions')
-        .insert([
-          {
-            store_id: params.storeId,
-            transaction_date: new Date().toISOString().split('T')[0],
-            transaction_type: 'credit',
-            debit: 0,
-            credit: params.amount,
-            running_balance: newBal,
-            description: desc,
-            reference_type: 'payment',
-          },
-        ])
-        .select()
-        .single();
+      // Delegate directly to server-side record_payment RPC
+      // Running balance computation and concurrency locking are executed inside the database transaction.
+      const { data, error } = await supabase.rpc('record_payment', {
+        p_store_id: params.storeId,
+        p_amount: params.amount,
+        p_payment_mode: params.paymentMode,
+        p_reference_number: params.referenceNumber || null,
+        p_notes: params.notes || null,
+        p_idempotency_key: params.idempotencyKey || null,
+      });
 
       if (error) {
         return { success: false, error: error.message };
       }
-      return { success: true, data: data as LedgerTransaction };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to record payment' };
+
+      return { success: true, data: data as unknown as LedgerTransaction };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to record payment.';
+      return { success: false, error: message };
     }
   },
 

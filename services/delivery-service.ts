@@ -201,128 +201,31 @@ export const deliveryService = {
   // ========================================================
   async confirmPickup(params: {
     assignmentId: string;
-    orderId: string;
-    deliveryPersonId: string;
-    deliveryPersonName: string;
+    orderId?: string;
+    deliveryPersonId?: string;
+    deliveryPersonName?: string;
     notes?: string;
   }): Promise<{ success: boolean; message: string }> {
-    const now = new Date().toISOString();
-
     try {
-      // 1. Validate that assignment belongs to this delivery pilot
-      const { data: assignment, error: assignErr } = await supabase
-        .from('delivery_assignments')
-        .select('*')
-        .eq('id', params.assignmentId)
-        .eq('delivery_person_id', params.deliveryPersonId)
-        .single();
+      const { error } = await supabase.rpc('confirm_pickup', {
+        p_assignment_id: params.assignmentId,
+        p_notes: params.notes || null,
+      });
 
-      if (assignErr || !assignment) {
+      if (error) {
         return {
           success: false,
-          message: 'Delivery assignment not found or unauthorized for your account.',
+          message: error.message || 'Failed to confirm warehouse pickup.',
         };
-      }
-
-      // 2. Fetch order to verify eligibility
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', params.orderId)
-        .single();
-
-      if (orderErr || !order) {
-        return { success: false, message: 'Order record not found.' };
-      }
-
-      // 3. Update delivery assignment status to in_transit
-      const { error: updateAssignErr } = await supabase
-        .from('delivery_assignments')
-        .update({
-          status: 'in_transit',
-          delivery_notes: params.notes ? `[Pickup] ${params.notes}` : assignment.delivery_notes,
-          updated_at: now,
-        })
-        .eq('id', params.assignmentId);
-
-      if (updateAssignErr) throw updateAssignErr;
-
-      // 4. Update order status to out_for_delivery
-      const { error: updateOrderErr } = await supabase
-        .from('orders')
-        .update({
-          status: 'out_for_delivery',
-          updated_at: now,
-        })
-        .eq('id', params.orderId);
-
-      if (updateOrderErr) throw updateOrderErr;
-
-      // 5. Update inventory reservation to dispatched status safely
-      // (This marks the warehouse stock as physically handed over to the pilot)
-      try {
-        await supabase
-          .from('inventory_reservations')
-          .update({
-            status: 'dispatched',
-            updated_at: now,
-          })
-          .eq('order_id', params.orderId)
-          .eq('status', 'active');
-      } catch (e) {
-        console.warn('Inventory reservation update non-critical notice:', e);
-      }
-
-      // 6. Record Stock Movement (dispatch)
-      try {
-        const { data: items } = await supabase
-          .from('order_items')
-          .select('product_id, quantity')
-          .eq('order_id', params.orderId);
-
-        if (items && items.length > 0) {
-          const movements = items.map((item) => ({
-            product_id: item.product_id,
-            movement_type: 'dispatch',
-            quantity: item.quantity,
-            reference_type: 'orders',
-            reference_id: params.orderId,
-            notes: `Dispatched to pilot ${params.deliveryPersonName} for ${order.order_number}`,
-            created_by: params.deliveryPersonName,
-            created_at: now,
-          }));
-          await supabase.from('stock_movements').insert(movements);
-        }
-      } catch (e) {
-        console.warn('Stock movement non-critical notice:', e);
-      }
-
-      // 7. Insert Notification for Admin / Store
-      try {
-        await supabase.from('notifications').insert([
-          {
-            title: 'Order Dispatched from Godown',
-            message: `Order ${order.order_number} has been picked up from the warehouse by ${params.deliveryPersonName} and is now out for delivery.`,
-            type: 'delivery',
-            reference_type: 'orders',
-            reference_id: params.orderId,
-            is_read: false,
-          },
-        ]);
-      } catch (e) {
-        console.warn('Notification insert notice:', e);
       }
 
       return {
         success: true,
         message: 'Warehouse pickup confirmed. The order is now out for delivery!',
       };
-    } catch (err: any) {
-      console.error('Confirm pickup error:', err);
-      return {
-        success: false,
-        message: err.message || 'Failed to confirm warehouse pickup. Please check network connection.',
-      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to confirm warehouse pickup.';
+      return { success: false, message };
     }
   },
 
@@ -331,31 +234,22 @@ export const deliveryService = {
   // ========================================================
   async startDelivery(params: {
     assignmentId: string;
-    orderId: string;
-    deliveryPersonId: string;
+    orderId?: string;
+    deliveryPersonId?: string;
   }): Promise<{ success: boolean; message: string }> {
-    const now = new Date().toISOString();
     try {
-      await supabase
-        .from('delivery_assignments')
-        .update({
-          status: 'in_transit',
-          updated_at: now,
-        })
-        .eq('id', params.assignmentId)
-        .eq('delivery_person_id', params.deliveryPersonId);
+      const { error } = await supabase.rpc('start_delivery', {
+        p_assignment_id: params.assignmentId,
+      });
 
-      await supabase
-        .from('orders')
-        .update({
-          status: 'out_for_delivery',
-          updated_at: now,
-        })
-        .eq('id', params.orderId);
+      if (error) {
+        return { success: false, message: error.message || 'Could not update transit status.' };
+      }
 
       return { success: true, message: 'Transit started towards the retail outlet.' };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'Could not update transit status.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not update transit status.';
+      return { success: false, message };
     }
   },
 
@@ -364,9 +258,9 @@ export const deliveryService = {
   // ========================================================
   async completeDelivery(params: {
     assignmentId: string;
-    orderId: string;
-    deliveryPersonId: string;
-    deliveryPersonName: string;
+    orderId?: string;
+    deliveryPersonId?: string;
+    deliveryPersonName?: string;
     lineItemDeliveries: {
       orderItemId: string;
       productId: string;
@@ -375,145 +269,39 @@ export const deliveryService = {
     }[];
     notes?: string;
   }): Promise<{ success: boolean; isPartial: boolean; message: string }> {
-    const now = new Date().toISOString();
-
     try {
-      // 1. Validate quantities: cannot be negative or exceed ordered quantity
-      for (const item of params.lineItemDeliveries) {
-        if (item.deliveredQty < 0) {
-          return {
-            success: false,
-            isPartial: false,
-            message: 'Delivered quantity cannot be negative.',
-          };
-        }
-        if (item.deliveredQty > item.orderedQty) {
-          return {
-            success: false,
-            isPartial: false,
-            message: `Delivered quantity (${item.deliveredQty}) exceeds ordered quantity (${item.orderedQty}).`,
-          };
-        }
+      const payloadLineItems = params.lineItemDeliveries.map((item) => ({
+        orderItemId: item.orderItemId,
+        deliveredQty: item.deliveredQty,
+      }));
+
+      const { data, error } = await supabase.rpc('complete_delivery', {
+        p_assignment_id: params.assignmentId,
+        p_line_items: payloadLineItems,
+        p_notes: params.notes || null,
+      });
+
+      if (error) {
+        return {
+          success: false,
+          isPartial: false,
+          message: error.message || 'Failed to complete delivery.',
+        };
       }
 
-      // Determine if fully or partially delivered
-      let totalOrdered = 0;
-      let totalDelivered = 0;
-      for (const item of params.lineItemDeliveries) {
-        totalOrdered += item.orderedQty;
-        totalDelivered += item.deliveredQty;
-      }
-
-      const isPartial = totalDelivered < totalOrdered;
-      const finalStatus: DeliveryAssignmentStatus = isPartial ? 'partially_delivered' : 'delivered';
-      const orderFinalStatus = isPartial ? 'partially_delivered' : 'delivered';
-
-      // 2. Update each order item's delivered_quantity in Supabase
-      for (const item of params.lineItemDeliveries) {
-        const { error: itemErr } = await supabase
-          .from('order_items')
-          .update({
-            delivered_quantity: item.deliveredQty,
-          })
-          .eq('id', item.orderItemId);
-
-        if (itemErr) throw itemErr;
-
-        // Deduct actual delivered stock from inventory current_stock
-        try {
-          const { data: inv } = await supabase
-            .from('inventory')
-            .select('*')
-            .eq('product_id', item.productId)
-            .maybeSingle();
-
-          if (inv) {
-            const newCurrentStock = Math.max(0, inv.current_stock - item.deliveredQty);
-            const newReservedStock = Math.max(0, inv.reserved_stock - item.orderedQty);
-            // If partial delivery, return the undelivered items back to available stock
-            const undeliveredQty = item.orderedQty - item.deliveredQty;
-            const newAvailableStock = inv.available_stock + undeliveredQty;
-
-            await supabase
-              .from('inventory')
-              .update({
-                current_stock: newCurrentStock,
-                reserved_stock: newReservedStock,
-                available_stock: newAvailableStock,
-                updated_at: now,
-              })
-              .eq('product_id', item.productId);
-          }
-        } catch (invErr) {
-          console.warn('Inventory stock level adjustment notice:', invErr);
-        }
-      }
-
-      // 3. Update Delivery Assignment status
-      const { error: assignErr } = await supabase
-        .from('delivery_assignments')
-        .update({
-          status: finalStatus,
-          delivery_notes: params.notes || null,
-          completed_at: now,
-          updated_at: now,
-        })
-        .eq('id', params.assignmentId)
-        .eq('delivery_person_id', params.deliveryPersonId);
-
-      if (assignErr) throw assignErr;
-
-      // 4. Update Order status
-      const { error: orderErr } = await supabase
-        .from('orders')
-        .update({
-          status: orderFinalStatus,
-          updated_at: now,
-        })
-        .eq('id', params.orderId);
-
-      if (orderErr) throw orderErr;
-
-      // 5. Fetch order info for notification and audit
-      const { data: order } = await supabase
-        .from('orders')
-        .select('order_number, store_id')
-        .eq('id', params.orderId)
-        .single();
-
-      // 6. Record notification
-      try {
-        const orderNumber = order?.order_number || 'Order';
-        await supabase.from('notifications').insert([
-          {
-            title: isPartial ? 'Order Partially Delivered' : 'Order Delivered Successfully',
-            message: isPartial
-              ? `${orderNumber} delivered with partial quantities (${totalDelivered}/${totalOrdered} items). Notes: ${params.notes || 'None'}`
-              : `${orderNumber} fully delivered to store by ${params.deliveryPersonName}.`,
-            type: 'delivery',
-            reference_type: 'orders',
-            reference_id: params.orderId,
-            is_read: false,
-          },
-        ]);
-      } catch (nErr) {
-        console.warn('Notification notice:', nErr);
-      }
+      const result = data as { is_partial?: boolean };
+      const isPartial = Boolean(result?.is_partial);
 
       return {
         success: true,
         isPartial,
         message: isPartial
-          ? `Partial delivery recorded (${totalDelivered}/${totalOrdered} units). Admin has been updated.`
-          : 'Order successfully marked as fully delivered!',
+          ? 'Delivery recorded as Partial. Undelivered stock returned to warehouse inventory.'
+          : 'Order successfully delivered to retailer!',
       };
-    } catch (err: any) {
-      console.error('Complete delivery error:', err);
-      return {
-        success: false,
-        isPartial: false,
-        message: err.message || 'Failed to complete delivery. Please retry.',
-      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to complete delivery.';
+      return { success: false, isPartial: false, message };
     }
   },
 

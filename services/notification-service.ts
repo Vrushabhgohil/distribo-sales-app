@@ -39,17 +39,9 @@ export const notificationService = {
     }
   },
 
-  async markAllAsRead(userId?: string): Promise<void> {
+  async markAllAsRead(): Promise<void> {
     try {
-      let query = supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('is_read', false);
-
-      if (userId) {
-        query = query.or(`user_id.eq.${userId},user_id.is.null`);
-      }
-      await query;
+      await supabase.rpc('mark_all_notifications_read');
     } catch (err) {
       console.warn('Mark all as read error:', err);
     }
