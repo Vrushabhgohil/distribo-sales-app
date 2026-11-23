@@ -1,3 +1,4 @@
+import { offlineStorage } from '@/lib/offline-storage';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 import { loginSchema, passwordSchema, signUpSchema, updatePasswordSchema } from '@/lib/validation/auth';
@@ -493,6 +494,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Supabase sign-out error:', err);
     } finally {
       await clearAllSessionData();
+      try {
+        await offlineStorage.wipeAllData();
+      } catch (e) {
+        console.warn('Error wiping offline storage on sign out:', e);
+      }
       try {
         queryClient.clear();
       } catch (e) {

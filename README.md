@@ -78,24 +78,26 @@ It is configured across:
 
 ### End-to-End Verification Procedure:
 1. Open the mobile app and sign in with the active salesperson credentials:
-   - **Email**: `vrushabhs203@gmail.com`
-   - **Password**: `Vrushabh@1234`
+   - **Email**: `your-sales-email@example.com`
+   - **Password**: `<your-secure-password>`
 2. Grant Location Permission when prompted.
 3. Tap **Start Beat GPS Tracking** on the Home dashboard or in `Location Tracking`.
-4. Check that live coordinates appear (e.g. `21.2381, 72.8785`).
+4. Check that live coordinates appear.
 5. Open the Admin Web Portal (`Motiba-CRM`) in your browser at `http://localhost:5173/location-tracking`.
-6. Confirm that **Vrushabh Gohil** appears with status `online` / `on_visit` and that his ping timestamp updates in real time.
-7. Conduct a store beat visit by checking in at **Motiba Stores**:
+6. Confirm that the salesperson appears with status `online` / `on_visit` and that their ping timestamp updates in real time.
+7. Conduct a store beat visit by checking in at an outlet:
    - The coordinates will be automatically tagged with `status: 'on_visit'` and linked to that outlet's `store_id`.
 
 ---
 
 ## 5. Environment Variables (`.env`)
 
+See `.env.example` for required configuration:
+
 ```env
 # Supabase Configuration
-EXPO_PUBLIC_SUPABASE_URL="https://qdadspfomzgtvqgbzzri.supabase.co"
-EXPO_PUBLIC_SUPABASE_ANON_KEY="sb_publishable__dekgtBd9V6X8cAORpI9TA_axORPCli"
+EXPO_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+EXPO_PUBLIC_SUPABASE_ANON_KEY="your-anon-key-here"
 
 # Google Maps API Key (Optional for restricted native maps API)
 EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=""
