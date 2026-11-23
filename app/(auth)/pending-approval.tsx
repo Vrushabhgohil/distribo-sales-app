@@ -2,14 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Clock, RefreshCw, LogOut, ShieldCheck, AlertTriangle } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Clock, RefreshCw, LogOut } from 'lucide-react-native';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthContext';
 
 export default function PendingApprovalScreen() {
   const router = useRouter();
-  const { salesperson, refreshProfile, signOut } = useAuth();
+  const { salesperson, deliveryPerson, refreshProfile, signOut } = useAuth();
 
   const handleRefresh = async () => {
     await refreshProfile();
@@ -43,11 +43,14 @@ export default function PendingApprovalScreen() {
           </Text>
 
           {/* User Details Box */}
-          {salesperson && (
+          {(salesperson || deliveryPerson) && (
             <View style={styles.profileBox}>
-              <Text style={styles.profileName}>{salesperson.name}</Text>
+              <Text style={styles.profileName}>
+                {salesperson?.name || deliveryPerson?.name}
+              </Text>
               <Text style={styles.profileMeta}>
-                {salesperson.employee_id} • {salesperson.email}
+                {salesperson?.employee_id || deliveryPerson?.employee_id} •{' '}
+                {salesperson?.email || deliveryPerson?.email}
               </Text>
               <View style={styles.statusPill}>
                 <View style={styles.statusDot} />

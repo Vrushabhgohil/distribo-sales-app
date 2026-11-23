@@ -5,7 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
 
 export default function RootIndexScreen() {
-  const { userRole, loading } = useAuth();
+  const { userRole, accountStatus, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -22,12 +22,14 @@ export default function RootIndexScreen() {
 
     if (!userRole) {
       router.replace('/(auth)/login');
+    } else if (accountStatus === 'pending') {
+      router.replace('/(auth)/pending-approval');
     } else if (userRole === 'sales_person') {
       router.replace('/sales' as any);
     } else if (userRole === 'delivery_person') {
       router.replace('/delivery' as any);
     }
-  }, [userRole, loading, router]);
+  }, [userRole, accountStatus, loading, router]);
 
   return <MotibaLoader fullscreen message="Initializing Motiba FMCG Suite..." />;
 }

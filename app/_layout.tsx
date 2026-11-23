@@ -14,7 +14,7 @@ import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { CustomAlertProvider } from '@/components/ui/CustomAlert';
 
 function RouteGuard() {
-  const { userRole, loading } = useAuth();
+  const { userRole, accountStatus, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -33,6 +33,7 @@ function RouteGuard() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const isResetPasswordScreen = inAuthGroup && segments[1] === 'reset-password';
+    const isPendingApprovalScreen = inAuthGroup && segments[1] === 'pending-approval';
     const inSalesGroup = segments[0] === 'sales';
     const inDeliveryGroup = segments[0] === 'delivery';
 
@@ -46,7 +47,28 @@ function RouteGuard() {
       if (!inAuthGroup) {
         router.replace('/(auth)/login');
       }
-    } else if (userRole === 'sales_person') {
+      return;
+    }
+
+    // Pending approval users must go strictly to the pending-approval screen
+    if (accountStatus === 'pending') {
+      if (!isPendingApprovalScreen) {
+        router.replace('/(auth)/pending-approval');
+      }
+      return;
+    }
+
+    // Active users on pending-approval screen should be routed to their portal
+    if (isPendingApprovalScreen) {
+      if (userRole === 'sales_person') {
+        router.replace('/sales' as any);
+      } else if (userRole === 'delivery_person') {
+        router.replace('/delivery' as any);
+      }
+      return;
+    }
+
+    if (userRole === 'sales_person') {
       // Sales officers belong strictly in /sales
       if (inAuthGroup || inDeliveryGroup) {
         router.replace('/sales' as any);
@@ -57,7 +79,7 @@ function RouteGuard() {
         router.replace('/delivery' as any);
       }
     }
-  }, [userRole, loading, segments, router]);
+  }, [userRole, accountStatus, loading, segments, router]);
 
   if (loading) {
     return <MotibaLoader fullscreen message="Initializing Motiba Sales Suite..." />;
