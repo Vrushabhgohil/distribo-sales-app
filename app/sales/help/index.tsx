@@ -22,20 +22,17 @@ import {
   MessageSquare,
   Search,
   BookOpen,
-  CheckCircle2,
   Store,
   ShoppingBag,
   Clock,
-  Navigation,
   FileSpreadsheet,
   CalendarCheck,
   Send,
   X,
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { Header } from '@/components/common/Header';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 
 interface FAQItem {
   id: string;
@@ -177,11 +174,11 @@ export default function HelpScreen() {
   };
 
   const handleCallSupport = () => {
-    Linking.openURL('tel:+919876543210');
+    Linking.openURL('tel:18001209900');
   };
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:support@aarvifmcg.com?subject=Motiba%20Sales%20Help%20Request');
+    Linking.openURL('mailto:support@motiba.example.com?subject=Motiba%20Sales%20Help%20Request');
   };
 
   const handleReportIssue = () => {

@@ -1,23 +1,26 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { NotificationItem } from '@/types';
 
+// Explicit column projection constants - no select('*') on application tables
+const NOTIFICATION_COLUMNS =
+  'id, user_id, title, message, type, is_read, data, created_at';
+
 export const notificationService = {
-  async getNotifications(userId?: string): Promise<NotificationItem[]> {
+  /**
+   * Fetches user-scoped and broadcast notifications.
+   * Server RLS enforces (user_id = auth.uid() OR user_id IS NULL) server-side.
+   */
+  async getNotifications(_userId?: string): Promise<NotificationItem[]> {
     if (!isSupabaseConfigured) return [];
 
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(NOTIFICATION_COLUMNS)
         .in('type', ['delivery', 'order', 'system'])
         .order('created_at', { ascending: false })
         .limit(40);
 
-      if (userId) {
-        query = query.or(`user_id.eq.${userId},user_id.is.null`);
-      }
-
-      const { data, error } = await query;
       if (error) {
         console.warn('Notifications fetch error:', error);
         return [];
@@ -47,19 +50,18 @@ export const notificationService = {
     }
   },
 
-  async getUnreadCount(userId?: string): Promise<number> {
+  /**
+   * Retrieves unread notification count.
+   * Server RLS automatically filters by auth.uid() or NULL broadcast.
+   */
+  async getUnreadCount(_userId?: string): Promise<number> {
     try {
-      let query = supabase
+      const { count, error } = await supabase
         .from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('is_read', false)
         .in('type', ['delivery', 'order', 'system']);
 
-      if (userId) {
-        query = query.or(`user_id.eq.${userId},user_id.is.null`);
-      }
-
-      const { count, error } = await query;
       if (error) return 0;
       return count || 0;
     } catch {

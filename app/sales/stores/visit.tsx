@@ -13,24 +13,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import {
-  MapPin,
-  Clock,
   CheckCircle2,
-  AlertCircle,
-  PlusCircle,
   Store as StoreIcon,
   Navigation,
   ArrowLeft,
   ShoppingBag,
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Header } from '@/components/common/Header';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
-import { supabase } from '@/lib/supabase';
 import { StoreVisit } from '@/types';
 
 const VISIT_OUTCOMES = [
@@ -54,7 +48,6 @@ export default function StoreVisitScreen() {
   const [visitNotes, setVisitNotes] = useState('');
   const [starting, setStarting] = useState(false);
   const [finishing, setFinishing] = useState(false);
-  const [currentCoords, setCurrentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const { data: store } = useQuery({
     queryKey: ['store', storeId],
@@ -83,14 +76,10 @@ export default function StoreVisitScreen() {
 
       // 2. If visitId was explicitly provided in navigation params
       if (visitId) {
-        const { data: vById } = await supabase
-          .from('store_visits')
-          .select('*, store:stores(*)')
-          .eq('id', visitId)
-          .maybeSingle();
+        const vById = await dataService.getVisitById(visitId);
 
         if (isMounted && vById) {
-          setActiveVisit(vById as StoreVisit);
+          setActiveVisit(vById);
           const startTime = new Date(vById.check_in_time).getTime();
           setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime) / 1000)));
         }
@@ -129,7 +118,6 @@ export default function StoreVisitScreen() {
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
         };
-        setCurrentCoords(coords);
       }
     } catch (e) {
       console.warn('GPS location capture note:', e);

@@ -90,20 +90,24 @@ export default function DeliveryExecutionScreen() {
 
   const handleCallStore = () => {
     if (store?.mobile) {
-      Linking.openURL(`tel:${store.mobile}`);
+      const sanitizedPhone = encodeURIComponent(store.mobile.trim().replace(/[^\d+]/g, ''));
+      Linking.openURL(`tel:${sanitizedPhone}`);
     }
   };
 
   const handleOpenMaps = () => {
     if (store?.gps_lat && store?.gps_lng) {
+      const lat = encodeURIComponent(String(store.gps_lat));
+      const lng = encodeURIComponent(String(store.gps_lng));
+      const label = encodeURIComponent(store.name || '');
       const scheme = Platform.select({
-        ios: `maps:0,0?q=${store.gps_lat},${store.gps_lng}`,
-        android: `geo:0,0?q=${store.gps_lat},${store.gps_lng}(${encodeURIComponent(store.name)})`,
+        ios: `maps:0,0?q=${lat},${lng}`,
+        android: `geo:0,0?q=${lat},${lng}(${label})`,
       });
       if (scheme) Linking.openURL(scheme);
     } else if (store?.address) {
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `${store.name}, ${store.address}, ${store.city || ''}`
+        `${store.name || ''}, ${store.address || ''}, ${store.city || ''}`
       )}`;
       Linking.openURL(url);
     }

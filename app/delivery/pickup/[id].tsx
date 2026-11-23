@@ -12,11 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import {
   Warehouse as WarehouseIcon,
-  Package,
   CheckCircle2,
   Phone,
   MapPin,
-  Clock,
   ShieldCheck,
   AlertCircle,
 } from 'lucide-react-native';
@@ -25,6 +23,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { deliveryService } from '@/services/delivery-service';
 import { Button } from '@/components/common/Button';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useOfflineSync } from '@/features/offline/OfflineSyncContext';
 
 export default function WarehousePickupScreen() {
@@ -53,6 +52,20 @@ export default function WarehousePickupScreen() {
     return (
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <LoadingIndicator message="Verifying warehouse dispatch manifest..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (!warehouse) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <EmptyState
+          icon={<AlertCircle size={40} color={Colors.error} />}
+          title="Warehouse Unavailable"
+          description="No active warehouse found for dispatch collection. Please contact dispatch support."
+          actionTitle="Go Back"
+          onAction={() => router.back()}
+        />
       </SafeAreaView>
     );
   }

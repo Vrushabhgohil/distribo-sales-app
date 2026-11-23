@@ -7,6 +7,20 @@ import {
   Warehouse,
 } from '@/types';
 
+// Explicit column projection constants - no select('*') on application tables
+const ASSIGNMENT_COLUMNS =
+  'id, order_id, delivery_person_id, assigned_date, vehicle_type, vehicle_number, status, completed_at, notes, created_at, updated_at';
+const ORDER_COLUMNS =
+  'id, order_number, store_id, salesperson_id, order_date, discount_amount, tax_amount, total_amount, notes, status, rejection_reason, confirmed_by, confirmed_at, created_at, updated_at';
+const STORE_COLUMNS =
+  'id, name, owner_name, mobile, address, area, pincode, store_type, latitude, longitude, balance, credit_limit, gst_number, is_active, created_at, updated_at';
+const ORDER_ITEM_COLUMNS =
+  'id, order_id, product_id, quantity, delivered_quantity, unit_price, total_price, created_at';
+const PRODUCT_COLUMNS =
+  'id, name, sku, category_id, brand_id, unit, price, cost_price, description, image_url, is_active, created_at, updated_at';
+const WAREHOUSE_COLUMNS =
+  'id, name, code, address, city, contact_person, contact_mobile, is_active, created_at, updated_at';
+
 export const deliveryService = {
   // ========================================================
   // 1. GET ASSIGNED DELIVERIES FOR DELIVERY PILOT
@@ -23,34 +37,13 @@ export const deliveryService = {
       let query = supabase
         .from('delivery_assignments')
         .select(`
-          *,
+          ${ASSIGNMENT_COLUMNS},
           order:orders (
-            id,
-            order_number,
-            store_id,
-            salesperson_id,
-            order_date,
-            discount_amount,
-            tax_amount,
-            total_amount,
-            notes,
-            status,
-            rejection_reason,
-            confirmed_by,
-            confirmed_at,
-            created_at,
-            updated_at,
-            store:stores (*),
+            ${ORDER_COLUMNS},
+            store:stores (${STORE_COLUMNS}),
             items:order_items (
-              id,
-              order_id,
-              product_id,
-              quantity,
-              delivered_quantity,
-              unit_price,
-              total_price,
-              created_at,
-              product:products (*)
+              ${ORDER_ITEM_COLUMNS},
+              product:products (${PRODUCT_COLUMNS})
             )
           )
         `)
@@ -76,7 +69,7 @@ export const deliveryService = {
         return await offlineStorage.getDeliveries();
       }
 
-      const deliveries = (data || []) as DeliveryAssignment[];
+      const deliveries = ((data || []) as unknown) as DeliveryAssignment[];
       // Cache for offline resiliency
       await offlineStorage.saveDeliveries(deliveries);
       return deliveries;
@@ -97,34 +90,13 @@ export const deliveryService = {
       let query = supabase
         .from('delivery_assignments')
         .select(`
-          *,
+          ${ASSIGNMENT_COLUMNS},
           order:orders (
-            id,
-            order_number,
-            store_id,
-            salesperson_id,
-            order_date,
-            discount_amount,
-            tax_amount,
-            total_amount,
-            notes,
-            status,
-            rejection_reason,
-            confirmed_by,
-            confirmed_at,
-            created_at,
-            updated_at,
-            store:stores (*),
+            ${ORDER_COLUMNS},
+            store:stores (${STORE_COLUMNS}),
             items:order_items (
-              id,
-              order_id,
-              product_id,
-              quantity,
-              delivered_quantity,
-              unit_price,
-              total_price,
-              created_at,
-              product:products (*)
+              ${ORDER_ITEM_COLUMNS},
+              product:products (${PRODUCT_COLUMNS})
             )
           )
         `)
@@ -141,19 +113,21 @@ export const deliveryService = {
         return cached.find((d) => d.id === assignmentId) || null;
       }
 
+      const assignment = (data as unknown) as DeliveryAssignment;
+
       // Populate salesperson details if present
-      if (data.order?.salesperson_id) {
+      if (assignment.order?.salesperson_id) {
         const { data: sp } = await supabase
           .from('sales_person_profiles')
           .select('id, name, employee_id, mobile')
-          .eq('id', data.order.salesperson_id)
+          .eq('id', assignment.order.salesperson_id)
           .maybeSingle();
         if (sp) {
-          (data.order as any).salesperson = sp;
+          assignment.order.salesperson = sp as any;
         }
       }
 
-      return data as DeliveryAssignment;
+      return assignment;
     } catch (err) {
       console.warn('Error fetching delivery by ID:', err);
       const cached = await offlineStorage.getDeliveries();
@@ -164,11 +138,11 @@ export const deliveryService = {
   // ========================================================
   // 3. GET WAREHOUSE DETAILS (For Central FMCG Godown)
   // ========================================================
-  async getCentralWarehouse(): Promise<Warehouse> {
+  async getCentralWarehouse(): Promise<Warehouse | null> {
     try {
       const { data, error } = await supabase
         .from('warehouses')
-        .select('*')
+        .select(WAREHOUSE_COLUMNS)
         .eq('is_active', true)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -177,23 +151,10 @@ export const deliveryService = {
       if (data && !error) {
         return data as Warehouse;
       }
+      return null;
     } catch {
-      // Fallback to default
+      return null;
     }
-
-    // Standard Aarvi Central FMCG Godown fallback
-    return {
-      id: '11111111-1111-1111-1111-111111111111',
-      name: 'Central FMCG Godown',
-      code: 'WH-MAIN-01',
-      address: 'Plot 42, Industrial Area Phase 1',
-      city: 'Rajkot / New Delhi',
-      contact_person: 'Harish Sharma',
-      contact_mobile: '9811002233',
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
   },
 
   // ========================================================

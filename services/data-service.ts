@@ -1,18 +1,57 @@
 import { supabase } from '@/lib/supabase';
 import { offlineStorage } from '@/lib/offline-storage';
 import {
+  storeFormSchema,
+  visitFormSchema,
+  followUpFormSchema,
+} from '@/lib/validation';
+import {
   Store,
   Product,
   Category,
   Brand,
   Order,
-  OrderItem,
   StoreVisit,
   LedgerTransaction,
   FollowUp,
   NotificationItem,
   LocationEntry,
 } from '@/types';
+
+// Explicit column projection constants - no select('*') on application tables
+export const STORE_COLUMNS =
+  'id, name, owner_name, mobile, alternate_mobile, email, address, area, city, pincode, gps_lat, gps_lng, gst_number, store_type, assigned_salesperson_id, credit_limit, payment_terms, status, created_at, updated_at' as const;
+
+export const PRODUCT_COLUMNS =
+  'id, name, sku, barcode, image_url, brand_id, category_id, sub_category, description, pack_size, unit, mrp, selling_price, distributor_price, gst_percentage, min_order_qty, max_order_qty, stock_quantity, status, created_at, updated_at' as const;
+
+export const CATEGORY_COLUMNS = 'id, name, description, status, created_at, updated_at' as const;
+
+export const BRAND_COLUMNS = 'id, name, description, logo_url, status, created_at, updated_at' as const;
+
+export const STORE_VISIT_COLUMNS =
+  'id, store_id, salesperson_id, visit_date, check_in_time, check_out_time, notes, outcome, latitude, longitude, created_at' as const;
+
+export const ORDER_COLUMNS =
+  'id, order_number, store_id, salesperson_id, order_date, discount_amount, tax_amount, total_amount, notes, status, rejection_reason, confirmed_by, confirmed_at, created_at, updated_at' as const;
+
+export const ORDER_ITEM_COLUMNS =
+  'id, order_id, product_id, quantity, delivered_quantity, unit_price, total_price, created_at' as const;
+
+export const LEDGER_COLUMNS =
+  'id, store_id, transaction_date, transaction_type, debit, credit, running_balance, description, reference_type, created_at' as const;
+
+export const FOLLOW_UP_COLUMNS =
+  'id, store_id, salesperson_id, follow_up_date, reason, status, notes, created_at, updated_at' as const;
+
+export const NOTIFICATION_COLUMNS =
+  'id, user_id, title, message, type, reference_type, reference_id, is_read, created_at' as const;
+
+export const LOCATION_COLUMNS =
+  'id, salesperson_id, delivery_person_id, latitude, longitude, status, store_id, recorded_at' as const;
+
+export const SALES_PROFILE_COLUMNS =
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, created_at, updated_at' as const;
 
 export const dataService = {
   // ========================================================
@@ -22,7 +61,7 @@ export const dataService = {
     try {
       let query = supabase
         .from('stores')
-        .select('*')
+        .select(STORE_COLUMNS)
         .eq('status', 'active')
         .order('name');
 
@@ -48,7 +87,7 @@ export const dataService = {
   async getStoreById(storeId: string): Promise<Store | null> {
     const { data, error } = await supabase
       .from('stores')
-      .select('*, assigned_salesperson:sales_person_profiles(*)')
+      .select(`${STORE_COLUMNS}, assigned_salesperson:sales_person_profiles(${SALES_PROFILE_COLUMNS})`)
       .eq('id', storeId)
       .maybeSingle();
 
@@ -64,7 +103,16 @@ export const dataService = {
     storeData: Omit<Store, 'id' | 'created_at' | 'updated_at'>
   ): Promise<{ success: boolean; data?: Store; error?: string }> {
     try {
-      const cleanMobile = storeData.mobile.trim();
+      // Validate store details using shared zod schema
+      const validation = storeFormSchema.safeParse(storeData);
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.issues[0]?.message || 'Invalid store data provided.',
+        };
+      }
+
+      const cleanMobile = validation.data.mobile;
       const { data: existing } = await supabase
         .from('stores')
         .select('id, name')
@@ -82,12 +130,11 @@ export const dataService = {
         .from('stores')
         .insert([
           {
-            ...storeData,
-            mobile: cleanMobile,
+            ...validation.data,
             status: 'active',
           },
         ])
-        .select()
+        .select(STORE_COLUMNS)
         .single();
 
       if (error) {
@@ -99,8 +146,9 @@ export const dataService = {
       await offlineStorage.saveStores([...currentCache, data as Store]);
 
       return { success: true, data: data as Store };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to create store outlet.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create store outlet.';
+      return { success: false, error: message };
     }
   },
 
@@ -111,7 +159,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, brand:brands(*), category:categories(*)')
+        .select(`${PRODUCT_COLUMNS}, brand:brands(${BRAND_COLUMNS}), category:categories(${CATEGORY_COLUMNS})`)
         .eq('status', 'active')
         .order('name');
 
@@ -120,7 +168,7 @@ export const dataService = {
         return await offlineStorage.getProducts();
       }
 
-      const products = (data || []) as Product[];
+      const products = ((data || []) as unknown) as Product[];
       await offlineStorage.saveProducts(products);
       return products;
     } catch (err) {
@@ -132,7 +180,7 @@ export const dataService = {
   async getProductById(productId: string): Promise<Product | null> {
     const { data, error } = await supabase
       .from('products')
-      .select('*, brand:brands(*), category:categories(*)')
+      .select(`${PRODUCT_COLUMNS}, brand:brands(${BRAND_COLUMNS}), category:categories(${CATEGORY_COLUMNS})`)
       .eq('id', productId)
       .maybeSingle();
 
@@ -143,7 +191,7 @@ export const dataService = {
   async getCategories(): Promise<Category[]> {
     const { data, error } = await supabase
       .from('categories')
-      .select('*')
+      .select(CATEGORY_COLUMNS)
       .eq('status', 'active')
       .order('name');
 
@@ -154,7 +202,7 @@ export const dataService = {
   async getBrands(): Promise<Brand[]> {
     const { data, error } = await supabase
       .from('brands')
-      .select('*')
+      .select(BRAND_COLUMNS)
       .eq('status', 'active')
       .order('name');
 
@@ -169,7 +217,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('store_visits')
-        .select('*, store:stores(*)')
+        .select(`${STORE_VISIT_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .eq('salesperson_id', salespersonId)
         .is('check_out_time', null)
         .order('check_in_time', { ascending: false })
@@ -187,18 +235,36 @@ export const dataService = {
     }
   },
 
+  async getVisitById(visitId: string): Promise<StoreVisit | null> {
+    try {
+      const { data, error } = await supabase
+        .from('store_visits')
+        .select(`${STORE_VISIT_COLUMNS}, store:stores(${STORE_COLUMNS})`)
+        .eq('id', visitId)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Visit fetch error:', error);
+        return null;
+      }
+      return data as StoreVisit | null;
+    } catch {
+      return null;
+    }
+  },
+
   async getTodayVisits(salespersonId: string): Promise<StoreVisit[]> {
     const today = new Date().toISOString().split('T')[0];
     try {
       const { data, error } = await supabase
         .from('store_visits')
-        .select('*, store:stores(*)')
+        .select(`${STORE_VISIT_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .eq('salesperson_id', salespersonId)
         .eq('visit_date', today)
         .order('check_in_time', { ascending: false });
 
       if (error) return [];
-      return (data || []) as StoreVisit[];
+      return ((data || []) as unknown) as StoreVisit[];
     } catch {
       return [];
     }
@@ -207,7 +273,7 @@ export const dataService = {
   async getStoreVisits(storeId: string): Promise<StoreVisit[]> {
     const { data, error } = await supabase
       .from('store_visits')
-      .select('*')
+      .select(STORE_VISIT_COLUMNS)
       .eq('store_id', storeId)
       .order('check_in_time', { ascending: false })
       .limit(20);
@@ -222,7 +288,20 @@ export const dataService = {
     coords?: { latitude: number; longitude: number }
   ): Promise<{ success: boolean; data?: StoreVisit; error?: string }> {
     try {
-      // 1. Check if an active visit already exists
+      const validation = visitFormSchema.safeParse({
+        storeId,
+        latitude: coords?.latitude,
+        longitude: coords?.longitude,
+      });
+
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.issues[0]?.message || 'Invalid visit coordinates',
+        };
+      }
+
+      // Check if active visit already exists
       const existing = await this.getActiveVisit(salespersonId);
       if (existing) {
         return {
@@ -246,7 +325,7 @@ export const dataService = {
             longitude: coords?.longitude || null,
           },
         ])
-        .select('*, store:stores(*)')
+        .select(`${STORE_VISIT_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .single();
 
       if (error) throw error;
@@ -262,9 +341,10 @@ export const dataService = {
         });
       }
 
-      return { success: true, data: data as StoreVisit };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to start store visit.' };
+      return { success: true, data: (data as unknown) as StoreVisit };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to start store visit.';
+      return { success: false, error: message };
     }
   },
 
@@ -284,7 +364,7 @@ export const dataService = {
           notes: notes?.trim() || null,
         })
         .eq('id', visitId)
-        .select('*, store:stores(*)')
+        .select(`${STORE_VISIT_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .single();
 
       if (error) throw error;
@@ -299,9 +379,10 @@ export const dataService = {
         });
       }
 
-      return { success: true, data: data as StoreVisit };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to finish visit.' };
+      return { success: true, data: (data as unknown) as StoreVisit };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to finish visit.';
+      return { success: false, error: message };
     }
   },
 
@@ -312,7 +393,9 @@ export const dataService = {
     try {
       let query = supabase
         .from('orders')
-        .select('*, store:stores(*), items:order_items(*, product:products(*))')
+        .select(
+          `${ORDER_COLUMNS}, store:stores(${STORE_COLUMNS}), items:order_items(${ORDER_ITEM_COLUMNS}, product:products(${PRODUCT_COLUMNS}))`
+        )
         .order('created_at', { ascending: false });
 
       if (salespersonId) {
@@ -328,7 +411,7 @@ export const dataService = {
         console.warn('Orders fetch error:', error);
         return [];
       }
-      return (data || []) as Order[];
+      return ((data || []) as unknown) as Order[];
     } catch (err) {
       console.warn('Orders fetch exception:', err);
       return [];
@@ -339,7 +422,9 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*, store:stores(*), items:order_items(*, product:products(*))')
+        .select(
+          `${ORDER_COLUMNS}, store:stores(${STORE_COLUMNS}), items:order_items(${ORDER_ITEM_COLUMNS}, product:products(${PRODUCT_COLUMNS}))`
+        )
         .eq('id', orderId)
         .maybeSingle();
 
@@ -353,7 +438,7 @@ export const dataService = {
         try {
           const { data: sp } = await supabase
             .from('sales_person_profiles')
-            .select('*')
+            .select(SALES_PROFILE_COLUMNS)
             .eq('id', data.salesperson_id)
             .maybeSingle();
           if (sp) {
@@ -364,7 +449,7 @@ export const dataService = {
         }
       }
 
-      return data as Order | null;
+      return (data as unknown) as Order | null;
     } catch (err) {
       console.warn('getOrderById exception:', err);
       return null;
@@ -383,8 +468,6 @@ export const dataService = {
         return { success: false, error: 'Order must contain at least one product.' };
       }
 
-      // Delegate directly to the atomic, server-enforced create_order RPC
-      // All prices, unique order numbers, totals, and notifications are generated server-side.
       const payloadItems = params.items.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,
@@ -415,7 +498,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('ledger_transactions')
-        .select('*')
+        .select(LEDGER_COLUMNS)
         .eq('store_id', storeId)
         .order('created_at', { ascending: false });
 
@@ -443,8 +526,6 @@ export const dataService = {
         return { success: false, error: 'Payment amount must be greater than zero.' };
       }
 
-      // Delegate directly to server-side record_payment RPC
-      // Running balance computation and concurrency locking are executed inside the database transaction.
       const { data, error } = await supabase.rpc('record_payment', {
         p_store_id: params.storeId,
         p_amount: params.amount,
@@ -472,7 +553,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('follow_ups')
-        .select('*, store:stores(*)')
+        .select(`${FOLLOW_UP_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .eq('salesperson_id', salespersonId)
         .order('follow_up_date', { ascending: true });
 
@@ -480,7 +561,7 @@ export const dataService = {
         console.warn('Follow-ups fetch error:', error);
         return [];
       }
-      return (data || []) as FollowUp[];
+      return ((data || []) as unknown) as FollowUp[];
     } catch {
       return [];
     }
@@ -490,16 +571,32 @@ export const dataService = {
     followUp: Omit<FollowUp, 'id' | 'created_at' | 'updated_at'>
   ): Promise<{ success: boolean; data?: FollowUp; error?: string }> {
     try {
+      const validation = followUpFormSchema.safeParse({
+        storeId: followUp.store_id,
+        followUpDate: followUp.follow_up_date,
+        reason: followUp.reason,
+        status: followUp.status,
+        notes: followUp.notes || undefined,
+      });
+
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.issues[0]?.message || 'Invalid follow-up details.',
+        };
+      }
+
       const { data, error } = await supabase
         .from('follow_ups')
         .insert([followUp])
-        .select('*, store:stores(*)')
+        .select(`${FOLLOW_UP_COLUMNS}, store:stores(${STORE_COLUMNS})`)
         .single();
 
       if (error) throw error;
-      return { success: true, data: data as FollowUp };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to create follow-up reminder.' };
+      return { success: true, data: (data as unknown) as FollowUp };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create follow-up reminder.';
+      return { success: false, error: message };
     }
   },
 
@@ -515,8 +612,9 @@ export const dataService = {
 
       if (error) throw error;
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to update follow-up.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update follow-up.';
+      return { success: false, error: message };
     }
   },
 
@@ -527,7 +625,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(NOTIFICATION_COLUMNS)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -548,7 +646,7 @@ export const dataService = {
 
   async markAllNotificationsRead(): Promise<void> {
     try {
-      await supabase.from('notifications').update({ is_read: true }).eq('is_read', false);
+      await supabase.rpc('mark_all_notifications_read');
     } catch (e) {
       console.warn('Notifications mark all error:', e);
     }
@@ -578,7 +676,7 @@ export const dataService = {
       const { data, error } = await supabase
         .from('location_history')
         .insert([payload])
-        .select()
+        .select(LOCATION_COLUMNS)
         .single();
 
       if (error) {
@@ -587,7 +685,7 @@ export const dataService = {
         return null;
       }
 
-      // Check if there are queued offline locations to flush
+      // Flush queued offline locations
       const queued = await offlineStorage.getPendingLocations();
       if (queued.length > 0) {
         try {
@@ -610,7 +708,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('location_history')
-        .select('*')
+        .select(LOCATION_COLUMNS)
         .eq('salesperson_id', salespersonId)
         .order('recorded_at', { ascending: false })
         .limit(1)
@@ -627,7 +725,7 @@ export const dataService = {
     try {
       const { data, error } = await supabase
         .from('location_history')
-        .select('*')
+        .select(LOCATION_COLUMNS)
         .eq('salesperson_id', salespersonId)
         .order('recorded_at', { ascending: false })
         .limit(limit);
@@ -639,4 +737,3 @@ export const dataService = {
     }
   },
 };
-

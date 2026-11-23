@@ -54,7 +54,8 @@ export default function OrderDetailsScreen() {
 
   const handleCallStore = (phone?: string | null) => {
     if (phone) {
-      Linking.openURL(`tel:${phone}`);
+      const sanitized = encodeURIComponent(phone.trim().replace(/[^\d+]/g, ''));
+      Linking.openURL(`tel:${sanitized}`);
     }
   };
 

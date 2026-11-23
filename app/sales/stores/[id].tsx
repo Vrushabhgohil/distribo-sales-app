@@ -82,7 +82,8 @@ export default function StoreDetailsScreen() {
 
   const callStore = () => {
     if (store?.mobile) {
-      Linking.openURL(`tel:${store.mobile}`);
+      const sanitized = encodeURIComponent(store.mobile.trim().replace(/[^\d+]/g, ''));
+      Linking.openURL(`tel:${sanitized}`);
     }
   };
 

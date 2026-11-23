@@ -14,9 +14,6 @@ import {
   HelpCircle,
   Phone,
   Mail,
-  Truck,
-  Package,
-  AlertCircle,
 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
 import { Button } from '@/components/common/Button';
@@ -95,11 +92,11 @@ export default function HelpScreen() {
   };
 
   const handleCallSupport = () => {
-    Linking.openURL('tel:9811002233');
+    Linking.openURL('tel:18001209900');
   };
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:admin@aarvienterprise.com?subject=Delivery%20Fleet%20Support');
+    Linking.openURL('mailto:support@motiba.example.com?subject=Delivery%20Fleet%20Support');
   };
 
   return (
@@ -154,7 +151,7 @@ export default function HelpScreen() {
 
           <View style={styles.contactRow}>
             <Button
-              title="Call Dispatch (9811002233)"
+              title="Call Dispatch Support"
               onPress={handleCallSupport}
               variant="primary"
               size="md"
