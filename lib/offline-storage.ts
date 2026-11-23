@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import { Product, Store, CartItem, DeliveryAssignment, Order, OfflineQueueItem } from '@/types';
+import { secureStorageAdapter } from './secure-storage';
 
 const KEYS = {
   STORES_CACHE: '@motiba_stores_cache',
@@ -11,7 +13,7 @@ const KEYS = {
   ORDERS: '@motiba_cached_orders',
   OFFLINE_QUEUE: '@motiba_delivery_offline_queue',
   PROFILE: '@motiba_delivery_profile',
-};
+} as const;
 
 export interface LocalOrderDraft {
   id: string;
@@ -24,10 +26,26 @@ export interface LocalOrderDraft {
 }
 
 export const offlineStorage = {
-  // --- SALES CACHE ---
+  // ========================================================
+  // 1. MINIMUM OFFLINE CACHE (STORES & PRODUCTS)
+  // ========================================================
   async saveStores(stores: Store[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(KEYS.STORES_CACHE, JSON.stringify(stores));
+      // Retain only essential columns for offline reference
+      const minimalStores = stores.map((s) => ({
+        id: s.id,
+        name: s.name,
+        owner_name: s.owner_name,
+        mobile: s.mobile,
+        address: s.address,
+        area: s.area,
+        city: s.city,
+        pincode: s.pincode,
+        credit_limit: s.credit_limit,
+        status: s.status,
+        assigned_salesperson_id: s.assigned_salesperson_id,
+      }));
+      await AsyncStorage.setItem(KEYS.STORES_CACHE, JSON.stringify(minimalStores));
       await AsyncStorage.setItem(KEYS.LAST_SYNC_TIME, new Date().toISOString());
     } catch (e) {
       console.warn('Failed to cache stores:', e);
@@ -45,7 +63,21 @@ export const offlineStorage = {
 
   async saveProducts(products: Product[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(KEYS.PRODUCTS_CACHE, JSON.stringify(products));
+      // Retain only essential product fields
+      const minimalProducts = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        selling_price: p.selling_price,
+        mrp: p.mrp,
+        pack_size: p.pack_size,
+        unit: p.unit,
+        min_order_qty: p.min_order_qty,
+        status: p.status,
+        category_id: p.category_id,
+        brand_id: p.brand_id,
+      }));
+      await AsyncStorage.setItem(KEYS.PRODUCTS_CACHE, JSON.stringify(minimalProducts));
       await AsyncStorage.setItem(KEYS.LAST_SYNC_TIME, new Date().toISOString());
     } catch (e) {
       console.warn('Failed to cache products:', e);
@@ -69,6 +101,9 @@ export const offlineStorage = {
     }
   },
 
+  // ========================================================
+  // 2. ORDER DRAFTS
+  // ========================================================
   async saveOrderDraft(draft: LocalOrderDraft): Promise<void> {
     try {
       const existing = await this.getOrderDrafts();
@@ -98,6 +133,9 @@ export const offlineStorage = {
     }
   },
 
+  // ========================================================
+  // 3. PENDING LOCATIONS
+  // ========================================================
   async queuePendingLocation(location: {
     salesperson_id?: string;
     delivery_person_id?: string;
@@ -133,7 +171,9 @@ export const offlineStorage = {
     }
   },
 
-  // --- DELIVERY CACHE ---
+  // ========================================================
+  // 4. DELIVERY OFFLINE CACHE
+  // ========================================================
   async saveDeliveries(deliveries: DeliveryAssignment[]): Promise<void> {
     try {
       await AsyncStorage.setItem(KEYS.DELIVERIES, JSON.stringify(deliveries));
@@ -181,7 +221,9 @@ export const offlineStorage = {
     }
   },
 
-  // --- DELIVERY OFFLINE QUEUE MANAGEMENT ---
+  // ========================================================
+  // 5. OFFLINE QUEUE (IDEMPOTENT, CRYPTO UUID, RETRY LOGIC)
+  // ========================================================
   async getOfflineQueue(): Promise<OfflineQueueItem[]> {
     try {
       const data = await AsyncStorage.getItem(KEYS.OFFLINE_QUEUE);
@@ -191,13 +233,25 @@ export const offlineStorage = {
     }
   },
 
-  async addToOfflineQueue(item: Omit<OfflineQueueItem, 'id' | 'timestamp' | 'status'>): Promise<OfflineQueueItem> {
+  async addToOfflineQueue(item: {
+    action: OfflineQueueItem['action'];
+    payload: Record<string, any>;
+  }): Promise<OfflineQueueItem> {
     const queue = await this.getOfflineQueue();
+    const id = Crypto.randomUUID();
+    const idempotencyKey = Crypto.randomUUID();
+
     const newItem: OfflineQueueItem = {
-      ...item,
-      id: `queue_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id,
+      idempotencyKey,
+      action: item.action,
+      payload: {
+        ...item.payload,
+        idempotencyKey,
+      },
       timestamp: Date.now(),
       status: 'pending',
+      attempts: 0,
     };
     queue.push(newItem);
     await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
@@ -210,17 +264,33 @@ export const offlineStorage = {
     await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(updated));
   },
 
-  async updateQueueItemStatus(id: string, status: 'pending' | 'syncing' | 'failed', error?: string): Promise<void> {
+  async updateQueueItem(id: string, updates: Partial<OfflineQueueItem>): Promise<void> {
     const queue = await this.getOfflineQueue();
     const index = queue.findIndex((item) => item.id === id);
     if (index >= 0) {
-      queue[index].status = status;
-      if (error) queue[index].error = error;
+      queue[index] = { ...queue[index], ...updates };
       await AsyncStorage.setItem(KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
     }
   },
 
   async clearOfflineQueue(): Promise<void> {
     await AsyncStorage.removeItem(KEYS.OFFLINE_QUEUE);
+  },
+
+  // ========================================================
+  // 6. LOGOUT COMPLETE STORAGE PURGE
+  // Wipes all @motiba_* keys, drafts, offline queues, and secure store
+  // ========================================================
+  async wipeAllData(): Promise<void> {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const motibaKeys = allKeys.filter((k) => k.startsWith('@motiba'));
+      if (motibaKeys.length > 0) {
+        await AsyncStorage.multiRemove(motibaKeys);
+      }
+      await secureStorageAdapter.wipeAllAuthTokens();
+    } catch (e) {
+      console.warn('Error wiping storage on logout:', e);
+    }
   },
 };

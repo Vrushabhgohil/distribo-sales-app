@@ -292,9 +292,13 @@ export interface CartItem {
 
 export interface OfflineQueueItem {
   id: string;
+  idempotencyKey: string;
   action: 'CONFIRM_PICKUP' | 'START_DELIVERY' | 'COMPLETE_DELIVERY' | 'RECORD_PARTIAL_DELIVERY';
-  payload: any;
+  payload: Record<string, any>;
   timestamp: number;
   status: 'pending' | 'syncing' | 'failed';
+  attempts: number;
+  lastAttemptAt?: number;
+  nextRetryAt?: number;
   error?: string;
 }

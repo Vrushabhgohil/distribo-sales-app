@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import {
   View,
@@ -53,7 +54,7 @@ export const CustomAlert = {
   ) => {
     if (alertListener) {
       alertListener({
-        id: Math.random().toString(),
+        id: Crypto.randomUUID(),
         title,
         message,
         buttons: buttons && buttons.length > 0 ? buttons : [{ text: 'OK', style: 'default' }],
