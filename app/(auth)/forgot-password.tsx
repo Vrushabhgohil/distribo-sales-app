@@ -48,8 +48,6 @@ export default function ForgotPasswordScreen() {
     setLoading(false);
 
     if (result.success) {
-      setSuccessMessage(
-        result.message || 'Password reset link sent! Check your inbox to complete reset.'
       const msg = result.message || 'Password reset link sent! Check your inbox to set a new password.';
       setSuccessMessage(msg);
       Alert.alert(

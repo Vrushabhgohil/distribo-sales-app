@@ -39,22 +39,26 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     const cleanId = identifier.trim();
-    const cleanPassword = password.trim();
 
     if (!cleanId) {
       setErrorMessage('Please enter your work email or Employee ID.');
       return;
     }
 
-    if (!cleanPassword) {
+    if (!password) {
       setErrorMessage('Please enter your password.');
+      return;
+    }
+
+    if (password.length < 10) {
+      setErrorMessage('Password must be at least 10 characters long.');
       return;
     }
 
     setLoading(true);
     setErrorMessage(null);
 
-    const result = await signIn(cleanId, cleanPassword, rememberMe);
+    const result = await signIn(cleanId, password, rememberMe);
     setLoading(false);
 
     if (!result.success) {

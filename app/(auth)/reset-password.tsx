@@ -39,20 +39,17 @@ export default function ResetPasswordScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleUpdatePassword = async () => {
-    const cleanPass = password.trim();
-    const cleanConfirm = confirmPassword.trim();
-
-    if (!cleanPass) {
+    if (!password) {
       setErrorMessage('Please enter a new password.');
       return;
     }
 
-    if (cleanPass.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (password.length < 10) {
+      setErrorMessage('Password must be at least 10 characters long.');
       return;
     }
 
-    if (cleanPass !== cleanConfirm) {
+    if (password !== confirmPassword) {
       setErrorMessage('Passwords do not match. Please verify both fields.');
       return;
     }
@@ -60,7 +57,7 @@ export default function ResetPasswordScreen() {
     setLoading(true);
     setErrorMessage(null);
 
-    const result = await updatePassword(cleanPass);
+    const result = await updatePassword(password);
     setLoading(false);
 
     if (!result.success) {
@@ -133,7 +130,7 @@ export default function ResetPasswordScreen() {
 
             <Input
               label="New Password"
-              placeholder="Enter at least 6 characters"
+              placeholder="Enter at least 10 characters"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={(t) => {

@@ -59,8 +59,8 @@ export default function SignUpScreen() {
       setErrorMessage('Please enter a valid corporate email address.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (password.length < 10) {
+      setErrorMessage('Password must be at least 10 characters long.');
       return;
     }
     if (password !== confirmPassword) {
@@ -79,7 +79,7 @@ export default function SignUpScreen() {
       fullName: fullName.trim(),
       mobile: mobile.trim(),
       email: email.trim(),
-      password: password.trim(),
+      password,
       assignedArea: assignedArea.trim() || 'Central Territory Beat',
     });
 
@@ -192,7 +192,7 @@ export default function SignUpScreen() {
 
             <Input
               label="Password *"
-              placeholder="Minimum 6 characters"
+              placeholder="Minimum 10 characters"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={(t) => {
