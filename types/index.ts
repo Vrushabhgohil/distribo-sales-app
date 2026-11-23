@@ -26,7 +26,6 @@ export interface SalesPersonProfile {
   photo_url?: string | null;
   mobile: string;
   email: string;
-  password?: string | null;
   address?: string | null;
   joining_date: string;
   assigned_area?: string | null;
@@ -43,7 +42,6 @@ export interface DeliveryPersonProfile {
   photo_url?: string | null;
   mobile: string;
   email: string;
-  password?: string | null;
   address?: string | null;
   vehicle_type: string;
   vehicle_number: string;
