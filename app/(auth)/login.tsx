@@ -77,8 +77,10 @@ export default function LoginScreen() {
       setErrorMessage(friendlyError);
       Alert.alert('Sign In Failed', friendlyError);
     } else {
-      // Role is automatically detected
-      if (result.role === 'sales_person') {
+      // Role and account status are automatically detected
+      if (result.accountStatus === 'pending') {
+        router.replace('/(auth)/pending-approval');
+      } else if (result.role === 'sales_person') {
         router.replace('/sales' as any);
       } else if (result.role === 'delivery_person') {
         router.replace('/delivery' as any);

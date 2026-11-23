@@ -6,8 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
+export type AccountStatus = 'pending' | 'active' | 'inactive';
+
 interface AuthContextType {
   userRole: UserRole | null;
+  accountStatus: AccountStatus | null;
   salesperson: SalesPersonProfile | null;
   deliveryPerson: DeliveryPersonProfile | null;
   loading: boolean;
@@ -15,14 +18,14 @@ interface AuthContextType {
     identifier: string,
     password: string,
     rememberMe?: boolean
-  ) => Promise<{ success: boolean; role?: UserRole; error?: string }>;
+  ) => Promise<{ success: boolean; role?: UserRole; accountStatus?: AccountStatus; error?: string }>;
   signUp: (params: {
     fullName: string;
     email: string;
     mobile: string;
     password: string;
     assignedArea?: string;
-  }) => Promise<{ success: boolean; error?: string }>;
+  }) => Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
@@ -31,6 +34,7 @@ interface AuthContextType {
 
 const AUTH_STORAGE_KEY = '@motiba_auth_session';
 const USER_ROLE_KEY = '@motiba_user_role';
+const ACCOUNT_STATUS_KEY = '@motiba_account_status';
 const REMEMBER_ME_KEY = '@motiba_remember_me';
 
 const SALES_PROFILE_COLUMNS =
@@ -89,6 +93,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus | null>(null);
   const [salesperson, setSalesperson] = useState<SalesPersonProfile | null>(null);
   const [deliveryPerson, setDeliveryPerson] = useState<DeliveryPersonProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profile: SalesPersonProfile | DeliveryPersonProfile
   ) => {
     await AsyncStorage.setItem(USER_ROLE_KEY, role);
+    await AsyncStorage.setItem(ACCOUNT_STATUS_KEY, profile.status);
     await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
   };
 
@@ -106,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.multiRemove([
         AUTH_STORAGE_KEY,
         USER_ROLE_KEY,
+        ACCOUNT_STATUS_KEY,
         REMEMBER_ME_KEY,
       ]);
     } catch (e) {
@@ -128,17 +135,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 1. Check local session cache for instant startup
         const cachedRole = (await AsyncStorage.getItem(USER_ROLE_KEY)) as UserRole | null;
+        const cachedStatus = (await AsyncStorage.getItem(ACCOUNT_STATUS_KEY)) as AccountStatus | null;
         const cachedSession = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
 
         if (cachedRole && cachedSession && isMounted) {
           try {
             const parsed = JSON.parse(cachedSession);
+            setUserRole(cachedRole);
+            setAccountStatus(cachedStatus || parsed.status || 'active');
             if (cachedRole === 'sales_person') {
-              setUserRole('sales_person');
               setSalesperson(parsed as SalesPersonProfile);
               setDeliveryPerson(null);
             } else if (cachedRole === 'delivery_person') {
-              setUserRole('delivery_person');
               setDeliveryPerson(parsed as DeliveryPersonProfile);
               setSalesperson(null);
             }
@@ -155,12 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const result = await fetchProfileByUserId(session.user.id);
           if (result) {
-            if (result.profile.status !== 'active') {
+            if (result.profile.status === 'inactive') {
               await signOut();
               return;
             }
 
             if (isMounted) {
+              setAccountStatus(result.profile.status);
               if (result.role === 'sales_person') {
                 setUserRole('sales_person');
                 setSalesperson(result.profile as SalesPersonProfile);
@@ -192,7 +201,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (session?.user) {
         const result = await fetchProfileByUserId(session.user.id);
-        if (result && result.profile.status === 'active') {
+        if (result) {
+          if (result.profile.status === 'inactive') {
+            await signOut();
+            return;
+          }
+          setAccountStatus(result.profile.status);
           if (result.role === 'sales_person') {
             setUserRole('sales_person');
             setSalesperson(result.profile as SalesPersonProfile);
@@ -208,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (event === 'SIGNED_OUT') {
         await clearAllSessionData();
         setUserRole(null);
+        setAccountStatus(null);
         setSalesperson(null);
         setDeliveryPerson(null);
       }
@@ -224,8 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     identifierInput: string,
     passwordInput: string,
     rememberMe = true
-  ): Promise<{ success: boolean; role?: UserRole; error?: string }> => {
-    // Validate identifier and password (do NOT trim password)
+  ): Promise<{ success: boolean; role?: UserRole; accountStatus?: AccountStatus; error?: string }> => {
     const validation = loginSchema.safeParse({
       identifier: identifierInput,
       password: passwordInput,
@@ -238,12 +252,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const cleanId = validation.data.identifier;
-    const rawPassword = validation.data.password; // Untrimmed
+    const rawPassword = validation.data.password;
 
     try {
       await AsyncStorage.setItem(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
 
-      // 1. Resolve identifier to email via SECURITY DEFINER RPC (no account enumeration)
+      // 1. Resolve identifier to email via SECURITY DEFINER RPC
       const { data: resolvedEmail, error: rpcError } = await supabase.rpc(
         'resolve_login_identifier',
         { p_identifier: cleanId }
@@ -280,7 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      if (result.profile.status !== 'active') {
+      if (result.profile.status === 'inactive') {
         await supabase.auth.signOut();
         return {
           success: false,
@@ -288,6 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
+      setAccountStatus(result.profile.status);
       if (result.role === 'sales_person') {
         setUserRole('sales_person');
         setSalesperson(result.profile as SalesPersonProfile);
@@ -299,7 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       await saveSessionData(result.role, result.profile);
-      return { success: true, role: result.role };
+      return { success: true, role: result.role, accountStatus: result.profile.status };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred during authentication.';
       return {
@@ -321,7 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mobile: string;
     password: string;
     assignedArea?: string;
-  }): Promise<{ success: boolean; error?: string }> => {
+  }): Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }> => {
     // Validate inputs
     const validation = signUpSchema.safeParse({
       fullName,
@@ -343,10 +358,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cleanEmail = validation.data.email;
     const cleanMobile = validation.data.mobile;
     const cleanName = validation.data.fullName;
-    const rawPassword = validation.data.password; // Untrimmed
+    const rawPassword = validation.data.password;
 
     try {
-      // 1. Check duplicate mobile or email
+      // 1. Check duplicate mobile or email in sales_person_profiles
       const { data: existingMobile } = await supabase
         .from('sales_person_profiles')
         .select('id, name')
@@ -373,14 +388,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // 2. Register user through Supabase Auth (passwords only stored in Supabase Auth)
+      // 2. Register user through Supabase Auth without client role metadata.
+      // Server-side auth.users trigger creates the pending profile and generates employee_id sequence.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: rawPassword,
         options: {
           data: {
             full_name: cleanName,
-            role: 'sales_rep',
+            mobile: cleanMobile,
+            assigned_area: assignedArea || 'Unassigned',
           },
         },
       });
@@ -389,63 +406,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: authError.message };
       }
 
-      const userId = authData.user?.id || null;
-      const empId = `EMP-S${Math.floor(1000 + Math.random() * 9000)}`;
-
-      let profileData: SalesPersonProfile | null = null;
-
-      if (existingEmail && !existingEmail.user_id) {
-        // Link existing pre-enrolled profile (NEVER write password here)
-        const { data, error } = await supabase
-          .from('sales_person_profiles')
-          .update({
-            user_id: userId,
-            status: 'active',
-            name: cleanName,
-            mobile: cleanMobile,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingEmail.id)
-          .select(SALES_PROFILE_COLUMNS)
-          .single();
-
-        if (error) {
-          return { success: false, error: 'Failed to update pre-enrolled profile.' };
+      if (authData?.user) {
+        const result = await fetchProfileByUserId(authData.user.id);
+        if (result) {
+          setUserRole(result.role);
+          setAccountStatus(result.profile.status);
+          if (result.role === 'sales_person') {
+            setSalesperson(result.profile as SalesPersonProfile);
+            setDeliveryPerson(null);
+          } else {
+            setDeliveryPerson(result.profile as DeliveryPersonProfile);
+            setSalesperson(null);
+          }
+          await saveSessionData(result.role, result.profile);
+        } else {
+          setUserRole('sales_person');
+          setAccountStatus('pending');
         }
-        profileData = data as unknown as SalesPersonProfile;
-      } else {
-        // Create new profile (NEVER write password here)
-        const { data, error } = await supabase
-          .from('sales_person_profiles')
-          .insert([
-            {
-              user_id: userId,
-              name: cleanName,
-              employee_id: empId,
-              email: cleanEmail,
-              mobile: cleanMobile,
-              assigned_area: assignedArea || 'Unassigned',
-              status: 'active',
-              joining_date: new Date().toISOString().split('T')[0],
-            },
-          ])
-          .select(SALES_PROFILE_COLUMNS)
-          .single();
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-        profileData = data as unknown as SalesPersonProfile;
       }
 
-      if (profileData) {
-        setUserRole('sales_person');
-        setSalesperson(profileData);
-        setDeliveryPerson(null);
-        await saveSessionData('sales_person', profileData);
-      }
-
-      return { success: true };
+      return { success: true, accountStatus: 'pending' };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred during signup.';
       return { success: false, error: message };
@@ -491,7 +471,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // Update password solely in Supabase Auth (NO database table writes)
       const { error } = await supabase.auth.updateUser({
         password: validation.data,
       });
@@ -520,6 +499,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Error clearing query cache:', e);
       }
       setUserRole(null);
+      setAccountStatus(null);
       setSalesperson(null);
       setDeliveryPerson(null);
     }
@@ -537,10 +517,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const result = await fetchProfileByUserId(session.user.id);
       if (result) {
-        if (result.profile.status !== 'active') {
+        if (result.profile.status === 'inactive') {
           await signOut();
           return;
         }
+        setAccountStatus(result.profile.status);
         if (result.role === 'sales_person') {
           setSalesperson(result.profile as SalesPersonProfile);
           await saveSessionData('sales_person', result.profile);
@@ -558,6 +539,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         userRole,
+        accountStatus,
         salesperson,
         deliveryPerson,
         loading,

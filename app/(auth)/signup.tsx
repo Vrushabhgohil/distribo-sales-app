@@ -87,6 +87,8 @@ export default function SignUpScreen() {
 
     if (!result.success) {
       setErrorMessage(result.error || 'Failed to create salesperson account.');
+    } else {
+      router.replace('/(auth)/pending-approval');
     }
   };
 
