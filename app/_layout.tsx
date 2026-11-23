@@ -21,9 +21,25 @@ function RouteGuard() {
   useEffect(() => {
     if (loading) return;
 
+    // Check if recovery token is present on web
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+      if (hash.includes('type=recovery') || search.includes('type=recovery')) {
+        router.replace('/(auth)/reset-password');
+        return;
+      }
+    }
+
     const inAuthGroup = segments[0] === '(auth)';
+    const isResetPasswordScreen = inAuthGroup && segments[1] === 'reset-password';
     const inSalesGroup = segments[0] === 'sales';
     const inDeliveryGroup = segments[0] === 'delivery';
+
+    // Allow user to remain on reset-password screen to create new password
+    if (isResetPasswordScreen) {
+      return;
+    }
 
     if (!userRole) {
       // Strictly redirect unauthenticated users to login

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
+import { Alert } from '@/components/ui/CustomAlert';
 import { useRouter } from 'expo-router';
 import {
   AlertCircle,
@@ -49,6 +50,21 @@ export default function ForgotPasswordScreen() {
     if (result.success) {
       setSuccessMessage(
         result.message || 'Password reset link sent! Check your inbox to complete reset.'
+      const msg = result.message || 'Password reset link sent! Check your inbox to set a new password.';
+      setSuccessMessage(msg);
+      Alert.alert(
+        'Recovery Link Dispatched',
+        'We have dispatched the reset instructions to your inbox. You can open the link in your email or proceed directly to set your new password.',
+        [
+          {
+            text: 'Set New Password',
+            onPress: () => router.push('/(auth)/reset-password'),
+          },
+          {
+            text: 'OK',
+            style: 'cancel',
+          },
+        ]
       );
     } else {
       setErrorMessage(result.error || 'Failed to send reset email. Please contact support.');
@@ -137,6 +153,16 @@ export default function ForgotPasswordScreen() {
               iconPosition="right"
               style={styles.submitBtn}
             />
+
+            {successMessage && (
+              <Button
+                title="Set New Password Now"
+                onPress={() => router.push('/(auth)/reset-password')}
+                variant="outline"
+                size="md"
+                style={{ marginTop: 10 }}
+              />
+            )}
 
             <TouchableOpacity
               onPress={() => router.push('/(auth)/login')}

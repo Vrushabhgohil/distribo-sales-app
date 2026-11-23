@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/features/auth/AuthContext';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
@@ -9,6 +10,15 @@ export default function RootIndexScreen() {
 
   useEffect(() => {
     if (loading) return;
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+      if (hash.includes('type=recovery') || search.includes('type=recovery')) {
+        router.replace('/(auth)/reset-password');
+        return;
+      }
+    }
 
     if (!userRole) {
       router.replace('/(auth)/login');

@@ -1,8 +1,9 @@
-import { supabase } from '@/lib/supabase';
 import { queryClient } from '@/lib/query-client';
+import { supabase } from '@/lib/supabase';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 interface AuthContextType {
   userRole: UserRole | null;
@@ -22,6 +23,7 @@ interface AuthContextType {
     assignedArea?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -128,6 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen to Supabase Auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Active password recovery flow: allow user to complete reset
+        return;
+      }
+
       if (session?.user) {
         const email = session.user.email?.toLowerCase().trim();
 
@@ -208,7 +215,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     passwordInput: string,
     rememberMe = true
   ): Promise<{ success: boolean; role?: UserRole; error?: string }> => {
-    setLoading(true);
     const cleanId = identifierInput.trim().toLowerCase();
     const cleanPass = passwordInput.trim();
 
@@ -353,8 +359,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         success: false,
         error: err.message || 'An unexpected error occurred during authentication.',
       };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -371,7 +375,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string;
     assignedArea?: string;
   }): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true);
     const cleanEmail = email.trim().toLowerCase();
     const cleanMobile = mobile.trim();
     const cleanName = fullName.trim();
@@ -480,8 +483,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'An unexpected error occurred during signup.' };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -490,7 +491,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ): Promise<{ success: boolean; message?: string; error?: string }> => {
     const cleanEmail = email.trim().toLowerCase();
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
+      const redirectUrl =
+        Platform.OS === 'web' && typeof window !== 'undefined'
+          ? `${window.location.origin}/(auth)/reset-password`
+          : undefined;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: redirectUrl,
+      });
+
       if (error) {
         return { success: false, error: error.message };
       }
@@ -500,6 +509,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     } catch (err: any) {
       return { success: false, error: err.message || 'Failed to send password reset email.' };
+    }
+  };
+
+  const updatePassword = async (
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const cleanPass = newPassword.trim();
+      if (!cleanPass || cleanPass.length < 6) {
+        return { success: false, error: 'Password must be at least 6 characters long.' };
+      }
+
+      // 1. Update password in Supabase Auth
+      const { data, error } = await supabase.auth.updateUser({
+        password: cleanPass,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // 2. Also update candidate profiles if present
+      if (data?.user) {
+        const userId = data.user.id;
+        const userEmail = data.user.email?.toLowerCase().trim();
+
+        if (userEmail) {
+          await supabase
+            .from('sales_person_profiles')
+            .update({ password: cleanPass, updated_at: new Date().toISOString() })
+            .or(`user_id.eq.${userId},email.ilike.${userEmail}`);
+
+          await supabase
+            .from('delivery_person_profiles')
+            .update({ password: cleanPass, updated_at: new Date().toISOString() })
+            .or(`user_id.eq.${userId},email.ilike.${userEmail}`);
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to update password.' };
     }
   };
 
@@ -569,6 +620,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         resetPassword,
+        updatePassword,
         signOut,
         refreshProfile,
       }}

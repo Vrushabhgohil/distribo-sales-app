@@ -25,6 +25,7 @@ import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Alert } from '@/components/ui/CustomAlert';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -58,12 +59,19 @@ export default function LoginScreen() {
 
     if (!result.success) {
       let friendlyError = result.error || 'Authentication failed. Please check your credentials.';
-      if (friendlyError.toLowerCase().includes('invalid login credentials')) {
-        friendlyError = 'Incorrect email/ID or password. Please try again.';
-      } else if (friendlyError.toLowerCase().includes('network')) {
-        friendlyError = 'Network error. Please check your internet connection.';
+      const lower = friendlyError.toLowerCase();
+      if (
+        lower.includes('invalid login credentials') ||
+        lower.includes('invalid credentials') ||
+        lower.includes('invalid email') ||
+        lower.includes('invalid password')
+      ) {
+        friendlyError = 'Incorrect email/ID or password. Please verify and try again.';
+      } else if (lower.includes('network') || lower.includes('fetch')) {
+        friendlyError = 'Network connection failed. Please check your internet connectivity.';
       }
       setErrorMessage(friendlyError);
+      Alert.alert('Sign In Failed', friendlyError);
     } else {
       // Role is automatically detected
       if (result.role === 'sales_person') {
@@ -107,16 +115,16 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {/* Error Banner */}
-          {errorMessage && (
-            <View style={styles.errorBanner}>
-              <AlertCircle size={16} color={Colors.error} />
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            </View>
-          )}
-
           {/* Form Card */}
           <View style={styles.formCard}>
+            {/* Error Banner */}
+            {errorMessage && (
+              <View style={styles.errorBanner}>
+                <AlertCircle size={18} color={Colors.error} />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
+
             <Input
               label="Work Email or Employee ID"
               placeholder="e.g. name@aarvifmcg.com or EMP-001"
