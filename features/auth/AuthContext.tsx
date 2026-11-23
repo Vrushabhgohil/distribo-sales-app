@@ -1,5 +1,6 @@
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
+import { loginSchema, passwordSchema, signUpSchema, updatePasswordSchema } from '@/lib/validation/auth';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -32,9 +33,57 @@ const AUTH_STORAGE_KEY = '@motiba_auth_session';
 const USER_ROLE_KEY = '@motiba_user_role';
 const REMEMBER_ME_KEY = '@motiba_remember_me';
 
-// Backward compatibility keys
-const SALES_STORAGE_KEY = '@motiba_salesperson_session';
-const DELIVERY_STORAGE_KEY = '@motiba_delivery_session';
+const SALES_PROFILE_COLUMNS =
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, created_at, updated_at' as const;
+
+const DELIVERY_PROFILE_COLUMNS =
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, vehicle_type, vehicle_number, status, created_at, updated_at' as const;
+
+type AuthProfileResult =
+  | { role: 'sales_person'; profile: SalesPersonProfile }
+  | { role: 'delivery_person'; profile: DeliveryPersonProfile }
+  | null;
+
+/**
+ * Deduplicated helper to fetch user profile strictly by user_id with explicit columns.
+ */
+async function fetchProfileByUserId(userId: string): Promise<AuthProfileResult> {
+  const { data: salesProfile, error: salesError } = await supabase
+    .from('sales_person_profiles')
+    .select(SALES_PROFILE_COLUMNS)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (salesError) {
+    console.warn('Error loading sales profile by user_id:', salesError);
+  }
+
+  if (salesProfile) {
+    return {
+      role: 'sales_person',
+      profile: salesProfile as unknown as SalesPersonProfile,
+    };
+  }
+
+  const { data: deliveryProfile, error: deliveryError } = await supabase
+    .from('delivery_person_profiles')
+    .select(DELIVERY_PROFILE_COLUMNS)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (deliveryError) {
+    console.warn('Error loading delivery profile by user_id:', deliveryError);
+  }
+
+  if (deliveryProfile) {
+    return {
+      role: 'delivery_person',
+      profile: deliveryProfile as unknown as DeliveryPersonProfile,
+    };
+  }
+
+  return null;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -43,6 +92,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [salesperson, setSalesperson] = useState<SalesPersonProfile | null>(null);
   const [deliveryPerson, setDeliveryPerson] = useState<DeliveryPersonProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const saveSessionData = async (
+    role: UserRole,
+    profile: SalesPersonProfile | DeliveryPersonProfile
+  ) => {
+    await AsyncStorage.setItem(USER_ROLE_KEY, role);
+    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
+  };
+
+  const clearAllSessionData = async () => {
+    try {
+      await AsyncStorage.multiRemove([
+        AUTH_STORAGE_KEY,
+        USER_ROLE_KEY,
+        REMEMBER_ME_KEY,
+      ]);
+    } catch (e) {
+      console.warn('Error clearing auth storage:', e);
+    }
+  };
 
   // Restore authenticated session & auto-detect role on app start
   useEffect(() => {
@@ -62,60 +131,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const cachedSession = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
 
         if (cachedRole && cachedSession && isMounted) {
-          const parsed = JSON.parse(cachedSession);
-          if (cachedRole === 'sales_person') {
-            setUserRole('sales_person');
-            setSalesperson(parsed as SalesPersonProfile);
-            setDeliveryPerson(null);
-          } else if (cachedRole === 'delivery_person') {
-            setUserRole('delivery_person');
-            setDeliveryPerson(parsed as DeliveryPersonProfile);
-            setSalesperson(null);
+          try {
+            const parsed = JSON.parse(cachedSession);
+            if (cachedRole === 'sales_person') {
+              setUserRole('sales_person');
+              setSalesperson(parsed as SalesPersonProfile);
+              setDeliveryPerson(null);
+            } else if (cachedRole === 'delivery_person') {
+              setUserRole('delivery_person');
+              setDeliveryPerson(parsed as DeliveryPersonProfile);
+              setSalesperson(null);
+            }
+          } catch {
+            await clearAllSessionData();
           }
         }
 
-        // 2. Validate with Supabase session or latest DB state
-        const { data: { session } } = await supabase.auth.getSession();
+        // 2. Validate with Supabase session strictly by user_id
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (session?.user) {
-          const email = session.user.email?.toLowerCase().trim();
-
-          // Check if sales_person
-          const { data: salesProfile } = await supabase
-            .from('sales_person_profiles')
-            .select('*')
-            .or(`user_id.eq.${session.user.id},email.ilike.${email}`)
-            .maybeSingle();
-
-          if (salesProfile && salesProfile.status === 'active') {
-            if (isMounted) {
-              setUserRole('sales_person');
-              setSalesperson(salesProfile as SalesPersonProfile);
-              setDeliveryPerson(null);
-              await saveSessionData('sales_person', salesProfile);
+          const result = await fetchProfileByUserId(session.user.id);
+          if (result) {
+            if (result.profile.status !== 'active') {
+              await signOut();
+              return;
             }
-            return;
-          } else if (salesProfile && salesProfile.status !== 'active') {
-            await signOut();
-            return;
-          }
 
-          // Check if delivery_person
-          const { data: deliveryProfile } = await supabase
-            .from('delivery_person_profiles')
-            .select('*')
-            .or(`user_id.eq.${session.user.id},email.ilike.${email}`)
-            .maybeSingle();
-
-          if (deliveryProfile && deliveryProfile.status === 'active') {
             if (isMounted) {
-              setUserRole('delivery_person');
-              setDeliveryPerson(deliveryProfile as DeliveryPersonProfile);
-              setSalesperson(null);
-              await saveSessionData('delivery_person', deliveryProfile);
+              if (result.role === 'sales_person') {
+                setUserRole('sales_person');
+                setSalesperson(result.profile as SalesPersonProfile);
+                setDeliveryPerson(null);
+              } else {
+                setUserRole('delivery_person');
+                setDeliveryPerson(result.profile as DeliveryPersonProfile);
+                setSalesperson(null);
+              }
+              await saveSessionData(result.role, result.profile);
             }
-            return;
-          } else if (deliveryProfile && deliveryProfile.status !== 'active') {
-            await signOut();
             return;
           }
         }
@@ -131,40 +187,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen to Supabase Auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        // Active password recovery flow: allow user to complete reset
         return;
       }
 
       if (session?.user) {
-        const email = session.user.email?.toLowerCase().trim();
-
-        // Check Sales Person
-        const { data: spProfile } = await supabase
-          .from('sales_person_profiles')
-          .select('*')
-          .or(`user_id.eq.${session.user.id},email.ilike.${email}`)
-          .maybeSingle();
-
-        if (spProfile && spProfile.status === 'active') {
-          setUserRole('sales_person');
-          setSalesperson(spProfile as SalesPersonProfile);
-          setDeliveryPerson(null);
-          await saveSessionData('sales_person', spProfile);
-          return;
-        }
-
-        // Check Delivery Person
-        const { data: dpProfile } = await supabase
-          .from('delivery_person_profiles')
-          .select('*')
-          .or(`user_id.eq.${session.user.id},email.ilike.${email}`)
-          .maybeSingle();
-
-        if (dpProfile && dpProfile.status === 'active') {
-          setUserRole('delivery_person');
-          setDeliveryPerson(dpProfile as DeliveryPersonProfile);
-          setSalesperson(null);
-          await saveSessionData('delivery_person', dpProfile);
+        const result = await fetchProfileByUserId(session.user.id);
+        if (result && result.profile.status === 'active') {
+          if (result.role === 'sales_person') {
+            setUserRole('sales_person');
+            setSalesperson(result.profile as SalesPersonProfile);
+            setDeliveryPerson(null);
+          } else {
+            setUserRole('delivery_person');
+            setDeliveryPerson(result.profile as DeliveryPersonProfile);
+            setSalesperson(null);
+          }
+          await saveSessionData(result.role, result.profile);
           return;
         }
       } else if (event === 'SIGNED_OUT') {
@@ -181,183 +219,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const saveSessionData = async (role: UserRole, profile: any) => {
-    await AsyncStorage.setItem(USER_ROLE_KEY, role);
-    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-    if (role === 'sales_person') {
-      await AsyncStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(profile));
-      await AsyncStorage.removeItem(DELIVERY_STORAGE_KEY);
-    } else {
-      await AsyncStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(profile));
-      await AsyncStorage.removeItem(SALES_STORAGE_KEY);
-    }
-  };
-
-  const clearAllSessionData = async () => {
-    try {
-      await AsyncStorage.multiRemove([
-        AUTH_STORAGE_KEY,
-        USER_ROLE_KEY,
-        SALES_STORAGE_KEY,
-        DELIVERY_STORAGE_KEY,
-        REMEMBER_ME_KEY,
-        '@motiba_delivery_profile',
-        '@motiba_sales_profile',
-      ]);
-    } catch (e) {
-      console.warn('Error clearing auth storage:', e);
-    }
-  };
-
-  // Unified Sign In with Automatic Role Detection
+  // Unified Sign In with SECURITY DEFINER RPC and Supabase Auth
   const signIn = async (
     identifierInput: string,
     passwordInput: string,
     rememberMe = true
   ): Promise<{ success: boolean; role?: UserRole; error?: string }> => {
-    const cleanId = identifierInput.trim().toLowerCase();
-    const cleanPass = passwordInput.trim();
+    // Validate identifier and password (do NOT trim password)
+    const validation = loginSchema.safeParse({
+      identifier: identifierInput,
+      password: passwordInput,
+      rememberMe,
+    });
+
+    if (!validation.success) {
+      const msg = validation.error.issues[0]?.message || 'Invalid credentials.';
+      return { success: false, error: msg };
+    }
+
+    const cleanId = validation.data.identifier;
+    const rawPassword = validation.data.password; // Untrimmed
 
     try {
       await AsyncStorage.setItem(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
 
-      // 1. Look up profile in Sales Person table first
-      const { data: salesMatch } = await supabase
-        .from('sales_person_profiles')
-        .select('*')
-        .or(`email.ilike.${cleanId},employee_id.ilike.${cleanId}`)
-        .maybeSingle();
+      // 1. Resolve identifier to email via SECURITY DEFINER RPC (no account enumeration)
+      const { data: resolvedEmail, error: rpcError } = await supabase.rpc(
+        'resolve_login_identifier',
+        { p_identifier: cleanId }
+      );
 
-      // 2. Look up profile in Delivery Person table
-      const { data: deliveryMatch } = await supabase
-        .from('delivery_person_profiles')
-        .select('*')
-        .or(`email.ilike.${cleanId},employee_id.ilike.${cleanId}`)
-        .maybeSingle();
-
-      const candidateTargetEmail = salesMatch
-        ? salesMatch.email
-        : deliveryMatch
-          ? deliveryMatch.email
-          : cleanId;
-
-      // 3. Attempt Supabase Auth login
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: candidateTargetEmail,
-        password: cleanPass,
-      });
-
-      let authenticatedRole: UserRole | null = null;
-      let authenticatedProfile: any = null;
-
-      if (!authError && authData?.user) {
-        // Authenticated via Supabase Auth
-        const authUserId = authData.user.id;
-        const authUserEmail = (authData.user.email || candidateTargetEmail).toLowerCase().trim();
-
-        // Check sales profile
-        const { data: spRow } = await supabase
-          .from('sales_person_profiles')
-          .select('*')
-          .or(`user_id.eq.${authUserId},email.ilike.${authUserEmail}`)
-          .maybeSingle();
-
-        if (spRow) {
-          if (spRow.status !== 'active') {
-            await supabase.auth.signOut();
-            return {
-              success: false,
-              error: 'Your sales officer account is inactive. Please contact the administrator.',
-            };
-          }
-          // Link user_id if needed
-          if (!spRow.user_id) {
-            await supabase
-              .from('sales_person_profiles')
-              .update({ user_id: authUserId, updated_at: new Date().toISOString() })
-              .eq('id', spRow.id);
-          }
-          authenticatedRole = 'sales_person';
-          authenticatedProfile = { ...spRow, user_id: authUserId };
-        } else {
-          // Check delivery profile
-          const { data: dpRow } = await supabase
-            .from('delivery_person_profiles')
-            .select('*')
-            .or(`user_id.eq.${authUserId},email.ilike.${authUserEmail}`)
-            .maybeSingle();
-
-          if (dpRow) {
-            if (dpRow.status !== 'active') {
-              await supabase.auth.signOut();
-              return {
-                success: false,
-                error: 'Your delivery pilot account is inactive. Please contact the warehouse dispatcher.',
-              };
-            }
-            // Link user_id if needed
-            if (!dpRow.user_id) {
-              await supabase
-                .from('delivery_person_profiles')
-                .update({ user_id: authUserId, updated_at: new Date().toISOString() })
-                .eq('id', dpRow.id);
-            }
-            authenticatedRole = 'delivery_person';
-            authenticatedProfile = { ...dpRow, user_id: authUserId };
-          }
-        }
-      } else {
-        // Fallback: Direct password verification (if pre-provisioned in DB before Supabase Auth invitation)
-        if (salesMatch && salesMatch.password === cleanPass) {
-          if (salesMatch.status !== 'active') {
-            return {
-              success: false,
-              error: 'Your sales officer account is inactive. Please contact the administrator.',
-            };
-          }
-          authenticatedRole = 'sales_person';
-          authenticatedProfile = salesMatch;
-        } else if (deliveryMatch && deliveryMatch.password === cleanPass) {
-          if (deliveryMatch.status !== 'active') {
-            return {
-              success: false,
-              error: 'Your delivery pilot account is inactive. Please contact the warehouse dispatcher.',
-            };
-          }
-          authenticatedRole = 'delivery_person';
-          authenticatedProfile = deliveryMatch;
-        } else {
-          return {
-            success: false,
-            error: authError?.message || 'Invalid credentials. Please verify your email/ID and password.',
-          };
-        }
+      if (rpcError || !resolvedEmail) {
+        return {
+          success: false,
+          error: 'Incorrect email/ID or password. Please verify and try again.',
+        };
       }
 
-      if (!authenticatedRole || !authenticatedProfile) {
+      // 2. Authenticate strictly via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: resolvedEmail,
+        password: rawPassword,
+      });
+
+      if (authError || !authData?.user) {
+        return {
+          success: false,
+          error: 'Incorrect email/ID or password. Please verify and try again.',
+        };
+      }
+
+      // 3. Load profile strictly by user_id with explicit columns
+      const result = await fetchProfileByUserId(authData.user.id);
+
+      if (!result) {
+        await supabase.auth.signOut();
         return {
           success: false,
           error: 'Access denied. No active Sales Person or Delivery Person role associated with this account.',
         };
       }
 
-      // Successfully authenticated & role verified!
-      if (authenticatedRole === 'sales_person') {
+      if (result.profile.status !== 'active') {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'Your account is inactive. Please contact the administrator.',
+        };
+      }
+
+      if (result.role === 'sales_person') {
         setUserRole('sales_person');
-        setSalesperson(authenticatedProfile as SalesPersonProfile);
+        setSalesperson(result.profile as SalesPersonProfile);
         setDeliveryPerson(null);
       } else {
         setUserRole('delivery_person');
-        setDeliveryPerson(authenticatedProfile as DeliveryPersonProfile);
+        setDeliveryPerson(result.profile as DeliveryPersonProfile);
         setSalesperson(null);
       }
 
-      await saveSessionData(authenticatedRole, authenticatedProfile);
-      return { success: true, role: authenticatedRole };
-    } catch (err: any) {
+      await saveSessionData(result.role, result.profile);
+      return { success: true, role: result.role };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred during authentication.';
       return {
         success: false,
-        error: err.message || 'An unexpected error occurred during authentication.',
+        error: message,
       };
     }
   };
@@ -375,10 +322,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string;
     assignedArea?: string;
   }): Promise<{ success: boolean; error?: string }> => {
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanMobile = mobile.trim();
-    const cleanName = fullName.trim();
-    const cleanPass = password.trim();
+    // Validate inputs
+    const validation = signUpSchema.safeParse({
+      fullName,
+      email,
+      mobile,
+      password,
+      confirmPassword: password,
+      assignedArea,
+      agreeTerms: true,
+    });
+
+    if (!validation.success) {
+      return {
+        success: false,
+        error: validation.error.issues[0]?.message || 'Invalid signup details.',
+      };
+    }
+
+    const cleanEmail = validation.data.email;
+    const cleanMobile = validation.data.mobile;
+    const cleanName = validation.data.fullName;
+    const rawPassword = validation.data.password; // Untrimmed
 
     try {
       // 1. Check duplicate mobile or email
@@ -398,7 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: existingEmail } = await supabase
         .from('sales_person_profiles')
         .select('id, name, user_id')
-        .ilike('email', cleanEmail)
+        .eq('email', cleanEmail)
         .maybeSingle();
 
       if (existingEmail && existingEmail.user_id) {
@@ -408,10 +373,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // 2. Register user through Supabase Auth
+      // 2. Register user through Supabase Auth (passwords only stored in Supabase Auth)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
-        password: cleanPass,
+        password: rawPassword,
         options: {
           data: {
             full_name: cleanName,
@@ -430,25 +395,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let profileData: SalesPersonProfile | null = null;
 
       if (existingEmail && !existingEmail.user_id) {
+        // Link existing pre-enrolled profile (NEVER write password here)
         const { data, error } = await supabase
           .from('sales_person_profiles')
           .update({
             user_id: userId,
-            password: cleanPass,
             status: 'active',
             name: cleanName,
             mobile: cleanMobile,
             updated_at: new Date().toISOString(),
           })
           .eq('id', existingEmail.id)
-          .select()
+          .select(SALES_PROFILE_COLUMNS)
           .single();
 
         if (error) {
           return { success: false, error: 'Failed to update pre-enrolled profile.' };
         }
-        profileData = data as SalesPersonProfile;
+        profileData = data as unknown as SalesPersonProfile;
       } else {
+        // Create new profile (NEVER write password here)
         const { data, error } = await supabase
           .from('sales_person_profiles')
           .insert([
@@ -458,19 +424,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               employee_id: empId,
               email: cleanEmail,
               mobile: cleanMobile,
-              password: cleanPass,
               assigned_area: assignedArea || 'Unassigned',
               status: 'active',
               joining_date: new Date().toISOString().split('T')[0],
             },
           ])
-          .select()
+          .select(SALES_PROFILE_COLUMNS)
           .single();
 
         if (error) {
           return { success: false, error: error.message };
         }
-        profileData = data as SalesPersonProfile;
+        profileData = data as unknown as SalesPersonProfile;
       }
 
       if (profileData) {
@@ -481,8 +446,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'An unexpected error occurred during signup.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred during signup.';
+      return { success: false, error: message };
     }
   };
 
@@ -507,8 +473,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         success: true,
         message: 'Password reset link sent! Check your inbox to set a new password.',
       };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to send password reset email.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send password reset email.';
+      return { success: false, error: message };
     }
   };
 
@@ -516,41 +483,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     newPassword: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const cleanPass = newPassword.trim();
-      if (!cleanPass || cleanPass.length < 6) {
-        return { success: false, error: 'Password must be at least 6 characters long.' };
+      const validation = passwordSchema.safeParse(newPassword);
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.issues[0]?.message || 'Password must be at least 10 characters long.',
+        };
       }
 
-      // 1. Update password in Supabase Auth
-      const { data, error } = await supabase.auth.updateUser({
-        password: cleanPass,
+      // Update password solely in Supabase Auth (NO database table writes)
+      const { error } = await supabase.auth.updateUser({
+        password: validation.data,
       });
 
       if (error) {
         return { success: false, error: error.message };
       }
 
-      // 2. Also update candidate profiles if present
-      if (data?.user) {
-        const userId = data.user.id;
-        const userEmail = data.user.email?.toLowerCase().trim();
-
-        if (userEmail) {
-          await supabase
-            .from('sales_person_profiles')
-            .update({ password: cleanPass, updated_at: new Date().toISOString() })
-            .or(`user_id.eq.${userId},email.ilike.${userEmail}`);
-
-          await supabase
-            .from('delivery_person_profiles')
-            .update({ password: cleanPass, updated_at: new Date().toISOString() })
-            .or(`user_id.eq.${userId},email.ilike.${userEmail}`);
-        }
-      }
-
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to update password.' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update password.';
+      return { success: false, error: message };
     }
   };
 
@@ -574,35 +527,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     try {
-      if (userRole === 'sales_person' && salesperson?.id) {
-        const { data } = await supabase
-          .from('sales_person_profiles')
-          .select('*')
-          .eq('id', salesperson.id)
-          .maybeSingle();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-        if (data) {
-          if (data.status !== 'active') {
-            await signOut();
-            return;
-          }
-          setSalesperson(data as SalesPersonProfile);
-          await saveSessionData('sales_person', data);
+      if (!session?.user) {
+        return;
+      }
+
+      const result = await fetchProfileByUserId(session.user.id);
+      if (result) {
+        if (result.profile.status !== 'active') {
+          await signOut();
+          return;
         }
-      } else if (userRole === 'delivery_person' && deliveryPerson?.id) {
-        const { data } = await supabase
-          .from('delivery_person_profiles')
-          .select('*')
-          .eq('id', deliveryPerson.id)
-          .maybeSingle();
-
-        if (data) {
-          if (data.status !== 'active') {
-            await signOut();
-            return;
-          }
-          setDeliveryPerson(data as DeliveryPersonProfile);
-          await saveSessionData('delivery_person', data);
+        if (result.role === 'sales_person') {
+          setSalesperson(result.profile as SalesPersonProfile);
+          await saveSessionData('sales_person', result.profile);
+        } else {
+          setDeliveryPerson(result.profile as DeliveryPersonProfile);
+          await saveSessionData('delivery_person', result.profile);
         }
       }
     } catch (err) {
