@@ -29,7 +29,7 @@ export interface SalesPersonProfile {
   address?: string | null;
   joining_date: string;
   assigned_area?: string | null;
-  status: 'active' | 'inactive';
+  status: 'pending' | 'active' | 'inactive';
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +45,7 @@ export interface DeliveryPersonProfile {
   address?: string | null;
   vehicle_type: string;
   vehicle_number: string;
-  status: 'active' | 'inactive';
+  status: 'pending' | 'active' | 'inactive';
   created_at: string;
   updated_at: string;
 }
