@@ -4,13 +4,18 @@ import * as TaskManager from 'expo-task-manager';
 import { Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/features/auth/AuthContext';
-import { dataService } from '@/services/data-service';
-import { locationService } from '@/services/location-service';
+import { supabase } from '@/lib/supabase';
+import { locationService, CURRENT_CONSENT_VERSION } from '@/services/location-service';
+import { LocationConsentModal } from '@/components/location/LocationConsentModal';
 
 export const BACKGROUND_LOCATION_TASK = 'MOTIBA_BACKGROUND_LOCATION_TASK';
+export const CONSENT_STORAGE_KEY = '@motiba_location_consent_version';
+export const SHIFT_STORAGE_KEY = '@motiba_shift_active';
 
 interface LocationTrackerContextType {
   isTracking: boolean;
+  isShiftActive: boolean;
+  hasConsent: boolean;
   permissionStatus: Location.PermissionStatus | null;
   permissionDenied: boolean;
   permissionGranted: boolean;
@@ -20,6 +25,8 @@ interface LocationTrackerContextType {
   trackingStatus: 'online' | 'travelling' | 'on_visit' | 'idle' | 'offline';
   updateIntervalSec: number;
   batteryOptimized: boolean;
+  startShift: () => Promise<void>;
+  endShift: () => Promise<void>;
   startTracking: () => Promise<{ success: boolean; error?: string }>;
   stopTracking: () => Promise<void>;
   setTrackingStatus: (status: 'online' | 'travelling' | 'on_visit' | 'idle' | 'offline') => void;
@@ -29,6 +36,7 @@ interface LocationTrackerContextType {
   requestPermission: () => Promise<boolean>;
   refreshLocation: () => Promise<void>;
   openAppSettings: () => Promise<void>;
+  showConsentNotice: () => void;
 }
 
 const LocationTrackerContext = createContext<LocationTrackerContextType | undefined>(undefined);
@@ -39,31 +47,45 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: any) =>
     console.warn('Background location task error:', error);
     return;
   }
+
+  // 1. Session verification: Background task must validate active Supabase session
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) {
+    return;
+  }
+
+  // 2. Shift verification: Track strictly during an explicit active work shift
+  const shiftActive = await AsyncStorage.getItem(SHIFT_STORAGE_KEY);
+  if (shiftActive !== 'true') {
+    return;
+  }
+
   if (data) {
     const { locations } = data;
     if (locations && locations.length > 0) {
       const loc = locations[locations.length - 1];
+      const timestamp = loc.timestamp || Date.now();
+      const now = Date.now();
+
+      // Drop stale pings older than 24 hours
+      if (now - timestamp > 24 * 60 * 60 * 1000) {
+        return;
+      }
+
       try {
         const userRole = await AsyncStorage.getItem('@motiba_user_role');
         const sessionStr = await AsyncStorage.getItem('@motiba_auth_session');
 
         if (sessionStr) {
           const profile = JSON.parse(sessionStr);
-          if (userRole === 'sales_person' && profile.id) {
-            await dataService.recordLocationPing({
-              salespersonId: profile.id,
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-              status: 'travelling',
-            });
-          } else if (userRole === 'delivery_person' && profile.id) {
-            await locationService.recordDeliveryLocationPing({
-              deliveryPersonId: profile.id,
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-              status: 'travelling',
-            });
-          }
+          await locationService.recordLocationPing({
+            salespersonId: userRole === 'sales_person' ? profile.id : null,
+            deliveryPersonId: userRole === 'delivery_person' ? profile.id : null,
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            status: 'travelling',
+            recordedAt: new Date(timestamp).toISOString(),
+          });
         }
       } catch (err) {
         console.warn('Background ping exception:', err);
@@ -75,6 +97,9 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: any) =>
 export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userRole, salesperson, deliveryPerson } = useAuth();
   const [isTracking, setIsTracking] = useState<boolean>(false);
+  const [isShiftActive, setIsShiftActive] = useState<boolean>(false);
+  const [hasConsent, setHasConsent] = useState<boolean>(false);
+  const [consentModalVisible, setConsentModalVisible] = useState<boolean>(false);
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const [currentCoords, setCurrentCoords] = useState<{
     latitude: number;
@@ -92,8 +117,37 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
   const lastUploadedAtRef = useRef<number>(0);
   const isStartingRef = useRef<boolean>(false);
   const isTrackingRef = useRef<boolean>(false);
+  const isShiftActiveRef = useRef<boolean>(false);
   const trackingStatusRef = useRef(trackingStatus);
   trackingStatusRef.current = trackingStatus;
+  isShiftActiveRef.current = isShiftActive;
+
+  // Restore consent and shift state on mount
+  useEffect(() => {
+    let isMounted = true;
+    const restoreState = async () => {
+      try {
+        const storedConsent = await AsyncStorage.getItem(CONSENT_STORAGE_KEY);
+        const storedShift = await AsyncStorage.getItem(SHIFT_STORAGE_KEY);
+
+        const profileConsent =
+          userRole === 'sales_person'
+            ? salesperson?.location_consent_version
+            : deliveryPerson?.location_consent_version;
+
+        if (isMounted) {
+          setHasConsent(Boolean(storedConsent || profileConsent));
+          setIsShiftActive(storedShift === 'true');
+        }
+      } catch {
+        // Fallback default to non-shift
+      }
+    };
+    restoreState();
+    return () => {
+      isMounted = false;
+    };
+  }, [userRole, salesperson?.location_consent_version, deliveryPerson?.location_consent_version]);
 
   // Open device settings when permission is permanently denied
   const openAppSettings = async () => {
@@ -108,7 +162,29 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
     }
   };
 
-  const requestPermissions = async (): Promise<boolean> => {
+  const handleAcceptConsent = async () => {
+    try {
+      setConsentModalVisible(false);
+      setHasConsent(true);
+      await AsyncStorage.setItem(CONSENT_STORAGE_KEY, CURRENT_CONSENT_VERSION);
+      // Persist to server audit log & profile
+      await locationService.recordConsent(CURRENT_CONSENT_VERSION);
+      // Proceed to request OS permissions
+      await executePermissionRequest();
+    } catch (err) {
+      console.warn('Accept consent error:', err);
+    }
+  };
+
+  const handleDismissConsent = () => {
+    setConsentModalVisible(false);
+  };
+
+  const showConsentNotice = () => {
+    setConsentModalVisible(true);
+  };
+
+  const executePermissionRequest = async (): Promise<boolean> => {
     try {
       const current = await Location.getForegroundPermissionsAsync();
       setPermissionStatus(current.status);
@@ -140,6 +216,14 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
     }
   };
 
+  const requestPermissions = async (): Promise<boolean> => {
+    if (!hasConsent) {
+      setConsentModalVisible(true);
+      return false;
+    }
+    return await executePermissionRequest();
+  };
+
   const refreshLocation = async (): Promise<void> => {
     try {
       const hasPerm = await requestPermissions();
@@ -158,16 +242,10 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
       setCurrentCoords(coords);
       setLastPingTime(new Date().toLocaleTimeString());
 
-      if (userRole === 'sales_person' && salesperson?.id) {
-        await dataService.recordLocationPing({
-          salespersonId: salesperson.id,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          status: trackingStatusRef.current,
-        });
-      } else if (userRole === 'delivery_person' && deliveryPerson?.id) {
-        await locationService.recordDeliveryLocationPing({
-          deliveryPersonId: deliveryPerson.id,
+      if (isShiftActiveRef.current) {
+        await locationService.recordLocationPing({
+          salespersonId: userRole === 'sales_person' ? salesperson?.id : null,
+          deliveryPersonId: userRole === 'delivery_person' ? deliveryPerson?.id : null,
           latitude: coords.latitude,
           longitude: coords.longitude,
           status: trackingStatusRef.current,
@@ -178,7 +256,30 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
     }
   };
 
+  const startShift = async (): Promise<void> => {
+    setIsShiftActive(true);
+    isShiftActiveRef.current = true;
+    await AsyncStorage.setItem(SHIFT_STORAGE_KEY, 'true');
+    await startTracking();
+  };
+
+  const endShift = async (): Promise<void> => {
+    setIsShiftActive(false);
+    isShiftActiveRef.current = false;
+    await AsyncStorage.setItem(SHIFT_STORAGE_KEY, 'false');
+    await stopTracking();
+  };
+
   const startTracking = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!hasConsent) {
+      setConsentModalVisible(true);
+      return { success: false, error: 'Location privacy consent required before tracking.' };
+    }
+
+    if (!isShiftActiveRef.current) {
+      return { success: false, error: 'Telemetry tracking is restricted to active work shifts.' };
+    }
+
     if (isTrackingRef.current || isStartingRef.current) {
       return { success: true };
     }
@@ -186,7 +287,7 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
     isStartingRef.current = true;
 
     try {
-      const hasPermission = await requestPermissions();
+      const hasPermission = await executePermissionRequest();
       if (!hasPermission) {
         isStartingRef.current = false;
         return {
@@ -230,26 +331,21 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
             accuracy: loc.coords.accuracy,
           });
 
+          // Only upload if shift is actively maintained
+          if (!isShiftActiveRef.current) return;
+
           const now = Date.now();
           if (now - lastUploadedAtRef.current >= updateIntervalSec * 1000) {
             lastUploadedAtRef.current = now;
             setLastPingTime(new Date().toLocaleTimeString());
 
-            if (userRole === 'sales_person' && salesperson?.id) {
-              await dataService.recordLocationPing({
-                salespersonId: salesperson.id,
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                status: trackingStatusRef.current,
-              });
-            } else if (userRole === 'delivery_person' && deliveryPerson?.id) {
-              await locationService.recordDeliveryLocationPing({
-                deliveryPersonId: deliveryPerson.id,
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                status: trackingStatusRef.current,
-              });
-            }
+            await locationService.recordLocationPing({
+              salespersonId: userRole === 'sales_person' ? salesperson?.id : null,
+              deliveryPersonId: userRole === 'delivery_person' ? deliveryPerson?.id : null,
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              status: trackingStatusRef.current,
+            });
           }
         }
       );
@@ -265,8 +361,8 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
               distanceInterval: 50,
               deferredUpdatesInterval: updateIntervalSec * 1000,
               foregroundService: {
-                notificationTitle: 'Motiba Active Service',
-                notificationBody: 'Recording route and visit coordinates during work hours.',
+                notificationTitle: 'Motiba Shift Active',
+                notificationBody: 'Recording verified work route coordinates during active shift.',
                 notificationColor: '#970F18',
               },
             });
@@ -280,9 +376,10 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
       setIsTracking(true);
       isStartingRef.current = false;
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       isStartingRef.current = false;
-      return { success: false, error: err.message || 'Failed to start location tracker.' };
+      const message = err instanceof Error ? err.message : 'Failed to start location tracker.';
+      return { success: false, error: message };
     }
   };
 
@@ -320,8 +417,6 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
   };
 
   useEffect(() => {
-    requestPermissions();
-
     return () => {
       if (foregroundSubRef.current) {
         foregroundSubRef.current.remove();
@@ -329,15 +424,15 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
     };
   }, []);
 
-  const permissionDenied =
-    permissionStatus === Location.PermissionStatus.DENIED;
-  const permissionGranted =
-    permissionStatus === Location.PermissionStatus.GRANTED;
+  const permissionDenied = permissionStatus === Location.PermissionStatus.DENIED;
+  const permissionGranted = permissionStatus === Location.PermissionStatus.GRANTED;
 
   return (
     <LocationTrackerContext.Provider
       value={{
         isTracking,
+        isShiftActive,
+        hasConsent,
         permissionStatus,
         permissionDenied,
         permissionGranted,
@@ -347,6 +442,8 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
         trackingStatus,
         updateIntervalSec,
         batteryOptimized,
+        startShift,
+        endShift,
         startTracking,
         stopTracking,
         setTrackingStatus,
@@ -356,9 +453,15 @@ export const LocationTrackerProvider: React.FC<{ children: React.ReactNode }> = 
         requestPermission: requestPermissions,
         refreshLocation,
         openAppSettings,
+        showConsentNotice,
       }}
     >
       {children}
+      <LocationConsentModal
+        visible={consentModalVisible}
+        onAccept={handleAcceptConsent}
+        onDismiss={handleDismissConsent}
+      />
     </LocationTrackerContext.Provider>
   );
 };

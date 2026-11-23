@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { loginSchema, passwordSchema, signUpSchema, updatePasswordSchema } from '@/lib/validation/auth';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -39,10 +41,10 @@ const ACCOUNT_STATUS_KEY = '@motiba_account_status';
 const REMEMBER_ME_KEY = '@motiba_remember_me';
 
 const SALES_PROFILE_COLUMNS =
-  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, created_at, updated_at' as const;
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, location_consent_version, location_consent_at, created_at, updated_at' as const;
 
 const DELIVERY_PROFILE_COLUMNS =
-  'id, user_id, name, employee_id, photo_url, mobile, email, address, vehicle_type, vehicle_number, status, created_at, updated_at' as const;
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, vehicle_type, vehicle_number, status, location_consent_version, location_consent_at, created_at, updated_at' as const;
 
 type AuthProfileResult =
   | { role: 'sales_person'; profile: SalesPersonProfile }
@@ -493,6 +495,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Supabase sign-out error:', err);
     } finally {
+      // 1. Unregister background location updates and stop tracking telemetry on sign-out
+      try {
+        if (Platform.OS !== 'web') {
+          const isRegistered = await TaskManager.isTaskRegisteredAsync('MOTIBA_BACKGROUND_LOCATION_TASK');
+          if (isRegistered) {
+            await Location.stopLocationUpdatesAsync('MOTIBA_BACKGROUND_LOCATION_TASK');
+          }
+        }
+        await AsyncStorage.removeItem('@motiba_shift_active');
+      } catch (locErr) {
+        console.warn('Error unregistering background location on sign out:', locErr);
+      }
+
       await clearAllSessionData();
       try {
         await offlineStorage.wipeAllData();

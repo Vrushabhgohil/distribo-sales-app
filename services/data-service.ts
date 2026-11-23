@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { offlineStorage } from '@/lib/offline-storage';
+import { locationService } from '@/services/location-service';
 import {
   storeFormSchema,
   visitFormSchema,
@@ -51,7 +52,7 @@ export const LOCATION_COLUMNS =
   'id, salesperson_id, delivery_person_id, latitude, longitude, status, store_id, recorded_at' as const;
 
 export const SALES_PROFILE_COLUMNS =
-  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, created_at, updated_at' as const;
+  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, location_consent_version, location_consent_at, created_at, updated_at' as const;
 
 export const dataService = {
   // ========================================================
@@ -663,45 +664,13 @@ export const dataService = {
     status?: 'online' | 'travelling' | 'on_visit' | 'idle' | 'offline';
     storeId?: string | null;
   }): Promise<LocationEntry | null> {
-    const payload = {
-      salesperson_id: entry.salespersonId,
+    return await locationService.recordLocationPing({
+      salespersonId: entry.salespersonId,
       latitude: entry.latitude,
       longitude: entry.longitude,
-      status: entry.status || 'online',
-      store_id: entry.storeId || null,
-      recorded_at: new Date().toISOString(),
-    };
-
-    try {
-      const { data, error } = await supabase
-        .from('location_history')
-        .insert([payload])
-        .select(LOCATION_COLUMNS)
-        .single();
-
-      if (error) {
-        console.warn('Direct location ping failed, queuing offline:', error);
-        await offlineStorage.queuePendingLocation(payload);
-        return null;
-      }
-
-      // Flush queued offline locations
-      const queued = await offlineStorage.getPendingLocations();
-      if (queued.length > 0) {
-        try {
-          await supabase.from('location_history').insert(queued);
-          await offlineStorage.clearPendingLocations();
-        } catch (flushErr) {
-          console.warn('Flush offline locations error:', flushErr);
-        }
-      }
-
-      return data as LocationEntry;
-    } catch (networkErr) {
-      console.warn('Network error recording location, saving offline:', networkErr);
-      await offlineStorage.queuePendingLocation(payload);
-      return null;
-    }
+      status: entry.status,
+      storeId: entry.storeId,
+    });
   },
 
   async getLatestSalespersonLocation(salespersonId: string): Promise<LocationEntry | null> {

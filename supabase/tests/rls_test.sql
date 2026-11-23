@@ -222,7 +222,39 @@ BEGIN
     NULL;
   END;
 
-  RAISE NOTICE '>>> ALL 18 TABLE RLS TESTS PASSED SUCCESSFULLY! <<<';
+  -- ========================================================
+  -- 4. LOCATION PRIVACY & TELEMETRY RLS TESTS
+  -- ========================================================
+  RAISE NOTICE 'Testing Location Privacy & Telemetry Policies...';
+
+  -- 1. Delivery pilot CAN insert and view their own location ping
+  INSERT INTO public.location_history (delivery_person_id, latitude, longitude, status, recorded_at)
+  VALUES (v_delivery_profile_id, 23.0225, 72.5714, 'online', now());
+
+  SELECT count(*) INTO v_cnt FROM public.location_history WHERE delivery_person_id = v_delivery_profile_id;
+  ASSERT v_cnt >= 1, 'RLS FAIL: Delivery pilot cannot view their own location pings';
+
+  -- 2. Delivery pilot CAN record their own privacy consent
+  INSERT INTO public.location_consents (user_id, role, consent_version, consented_at)
+  VALUES (v_delivery_user_id, 'delivery_person', '2026.1-DPDP', now());
+
+  SELECT count(*) INTO v_cnt FROM public.location_consents WHERE user_id = v_delivery_user_id;
+  ASSERT v_cnt = 1, 'RLS FAIL: Delivery pilot cannot view their own location consent';
+
+  -- 3. Delivery pilot CANNOT insert location ping for another user or salesperson
+  BEGIN
+    INSERT INTO public.location_history (salesperson_id, latitude, longitude, status, recorded_at)
+    VALUES (v_sales_profile_id, 23.0225, 72.5714, 'online', now());
+    RAISE EXCEPTION 'RLS FAIL: Delivery pilot inserted location ping for salesperson';
+  EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+    NULL;
+  END;
+
+  -- 4. Delivery pilot CANNOT view other user's consent records
+  SELECT count(*) INTO v_cnt FROM public.location_consents WHERE user_id = v_sales_user_id;
+  ASSERT v_cnt = 0, 'RLS FAIL: Delivery pilot viewed another user privacy consent record';
+
+  RAISE NOTICE '>>> ALL 18 TABLE & PRIVACY RLS TESTS PASSED SUCCESSFULLY! <<<';
 END $$;
 
 -- Rollback test transaction to keep database pristine

@@ -30,6 +30,8 @@ export interface SalesPersonProfile {
   joining_date: string;
   assigned_area?: string | null;
   status: 'pending' | 'active' | 'inactive';
+  location_consent_version?: string | null;
+  location_consent_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +48,8 @@ export interface DeliveryPersonProfile {
   vehicle_type: string;
   vehicle_number: string;
   status: 'pending' | 'active' | 'inactive';
+  location_consent_version?: string | null;
+  location_consent_at?: string | null;
   created_at: string;
   updated_at: string;
 }

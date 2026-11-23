@@ -137,8 +137,8 @@ export const offlineStorage = {
   // 3. PENDING LOCATIONS
   // ========================================================
   async queuePendingLocation(location: {
-    salesperson_id?: string;
-    delivery_person_id?: string;
+    salesperson_id?: string | null;
+    delivery_person_id?: string | null;
     latitude: number;
     longitude: number;
     status: string;
