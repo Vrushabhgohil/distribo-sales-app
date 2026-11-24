@@ -58,7 +58,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 echo [2/2] Launching EAS Android APK Preview Build...
-call npx eas-cli@latest build --platform android --profile preview
+call npx eas-cli@16.28.0 build --platform android --profile preview
 echo.
 echo EAS Build process finished.
 pause

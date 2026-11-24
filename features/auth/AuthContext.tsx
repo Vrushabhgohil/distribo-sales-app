@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { offlineStorage } from '@/lib/offline-storage';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
@@ -8,9 +9,8 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { authStorage, AccountStatus, REMEMBER_ME_KEY } from './auth-storage';
 import { authService } from './auth-service';
-import { logger } from '@/lib/logger';
+import { AccountStatus, authStorage, REMEMBER_ME_KEY } from './auth-storage';
 
 export type { AccountStatus };
 

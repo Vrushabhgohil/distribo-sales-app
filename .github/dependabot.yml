@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # Maintain npm dependencies for React Native / Expo application
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+    ignore:
+      - dependency-name: "react"
+        versions: ["> 19.3.0"]
+      - dependency-name: "react-native"
+        versions: ["> 0.88.1"]
+      - dependency-name: "expo"
+        versions: ["> 58.0.25"]
+
+  # Maintain GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "actions"
+      - "ci"
