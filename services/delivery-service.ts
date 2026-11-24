@@ -123,7 +123,7 @@ export const deliveryService = {
           .eq('id', assignment.order.salesperson_id)
           .maybeSingle();
         if (sp) {
-          assignment.order.salesperson = sp as any;
+          (assignment.order as unknown as Record<string, unknown>).salesperson = sp;
         }
       }
 

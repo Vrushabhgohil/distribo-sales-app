@@ -7,34 +7,28 @@ import {
   TouchableOpacity,
   RefreshControl,
   Linking,
-  Image,
 } from 'react-native';
-import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import {
-  Store as StoreIcon,
-  Calendar,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Repeat,
-  Package,
-  ShieldCheck,
   ArrowLeft,
-  Truck,
-  Phone,
-  CreditCard,
-  FileText,
+  AlertCircle,
   RefreshCw,
+  Repeat,
+  Store as StoreIcon,
+  Phone,
+  Truck,
+  CreditCard,
+  ShieldCheck,
+  FileText,
 } from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { Header } from '@/components/common/Header';
-import { StatusBadge } from '@/components/ui/StatusBadge';
-import { dataService } from '@/services/data-service';
+import { Button } from '@/components/ui/Button';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
+import { useOrder } from '@/features/hooks/useMotibaQueries';
+import { OrderDetailHeader } from '@/components/orders/OrderDetailHeader';
+import { OrderDetailItemsList } from '@/components/orders/OrderDetailItemsList';
 
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,11 +40,7 @@ export default function OrderDetailsScreen() {
     isError,
     refetch,
     isRefetching,
-  } = useQuery({
-    queryKey: ['order', id],
-    queryFn: () => dataService.getOrderById(id!),
-    enabled: !!id,
-  });
+  } = useOrder(id);
 
   const handleCallStore = (phone?: string | null) => {
     if (phone) {
@@ -59,7 +49,6 @@ export default function OrderDetailsScreen() {
     }
   };
 
-  // 1. Loading State
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -78,7 +67,6 @@ export default function OrderDetailsScreen() {
     );
   }
 
-  // 2. Error or Empty State
   if (isError || !order) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -119,14 +107,12 @@ export default function OrderDetailsScreen() {
     );
   }
 
-  const isPending = order.status === 'pending';
-  const isConfirmed = order.status === 'confirmed';
-  const isRejected = order.status === 'rejected';
   const isDelivered = order.status === 'delivered';
   const isOutForDelivery = order.status === 'out_for_delivery';
   const isReady = order.status === 'ready_for_delivery';
+  const isConfirmed = order.status === 'confirmed';
+  const isRejected = order.status === 'rejected';
 
-  // Delivery status calculation
   const deliveryStatusText = isDelivered
     ? 'Delivered to Outlet'
     : isOutForDelivery
@@ -138,8 +124,6 @@ export default function OrderDetailsScreen() {
     : isRejected
     ? 'Cancelled / Rejected'
     : 'Awaiting Admin Approval';
-
-  const totalItemsCount = order.items?.reduce((acc, it) => acc + (it.quantity || 0), 0) || 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -171,70 +155,7 @@ export default function OrderDetailsScreen() {
         }
       >
         {/* Status Header Card */}
-        <View style={styles.card}>
-          <View style={styles.statusHeader}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.orderNumber}>{order.order_number}</Text>
-              <Text style={styles.orderTimestamp}>
-                Booked on {new Date(order.created_at).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
-            </View>
-            <StatusBadge status={order.status} size="md" />
-          </View>
-
-          {/* Workflow Status Notice */}
-          {isPending && (
-            <View style={styles.pendingNotice}>
-              <Clock size={16} color={Colors.goldDark} />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.pendingTitle}>Pending Admin Approval</Text>
-                <Text style={styles.pendingDesc}>
-                  Order is submitted and awaiting central admin verification of inventory and credit limits.
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {isConfirmed && (
-            <View style={styles.confirmedNotice}>
-              <CheckCircle2 size={16} color={Colors.secondary} />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.confirmedTitle}>Approved by Central Admin</Text>
-                <Text style={styles.confirmedDesc}>
-                  Order is verified and scheduled for packing and dispatch from central warehouse.
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {isRejected && (
-            <View style={styles.rejectedNotice}>
-              <AlertCircle size={16} color={Colors.error} />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.rejectedTitle}>Order Rejected</Text>
-                <Text style={styles.rejectedDesc}>
-                  Reason: {order.rejection_reason || 'Credit limit exceeded or inventory shortage.'}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {isDelivered && (
-            <View style={styles.deliveredNotice}>
-              <CheckCircle2 size={16} color={Colors.secondary} />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.deliveredTitle}>Order Delivered</Text>
-                <Text style={styles.deliveredDesc}>
-                  Products delivered to retail outlet and recorded in store ledger.
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
+        <OrderDetailHeader order={order} />
 
         {/* Store Information */}
         <View style={styles.card}>
@@ -266,83 +187,12 @@ export default function OrderDetailsScreen() {
         </View>
 
         {/* Product Items Breakdown */}
-        <View style={styles.card}>
-          <View style={styles.itemsHeadingRow}>
-            <Text style={styles.sectionHeading}>
-              Ordered Products ({order.items?.length || 0} lines, {totalItemsCount} units)
-            </Text>
-          </View>
-
-          {order.items && order.items.length > 0 ? (
-            order.items.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                {item.product?.image_url ? (
-                  <Image
-                    source={{ uri: item.product.image_url }}
-                    style={styles.productImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.productPlaceholder}>
-                    <Package size={20} color={Colors.primary} />
-                  </View>
-                )}
-
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.itemName}>{item.product?.name || 'Product Item'}</Text>
-                  <Text style={styles.itemMeta}>
-                    SKU: {item.product?.sku || 'N/A'} • Unit: {item.product?.unit || item.product?.pack_size || 'Pack'}
-                  </Text>
-                  <Text style={styles.itemQtyPrice}>
-                    Qty: {item.quantity} × ₹{item.unit_price}
-                  </Text>
-                </View>
-
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.itemTotal}>₹{item.total_price?.toLocaleString('en-IN')}</Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyItemsText}>No products recorded in this order.</Text>
-          )}
-
-          <View style={styles.divider} />
-
-          {/* Pricing Summary */}
-          <Text style={[styles.sectionHeading, { marginBottom: 8 }]}>Order Summary</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Items</Text>
-            <Text style={styles.summaryVal}>{totalItemsCount} units</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryVal}>₹{order.total_amount?.toLocaleString('en-IN')}</Text>
-          </View>
-
-          {order.discount_amount > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Discount Applied</Text>
-              <Text style={[styles.summaryVal, { color: Colors.success }]}>
-                -₹{order.discount_amount?.toLocaleString('en-IN')}
-              </Text>
-            </View>
-          )}
-
-          {order.tax_amount > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Applicable GST Tax</Text>
-              <Text style={styles.summaryVal}>₹{order.tax_amount?.toLocaleString('en-IN')}</Text>
-            </View>
-          )}
-
-          <View style={[styles.summaryRow, styles.finalTotalRow]}>
-            <Text style={styles.totalLabel}>Final Order Amount</Text>
-            <Text style={styles.totalValue}>₹{order.total_amount?.toLocaleString('en-IN')}</Text>
-          </View>
-        </View>
+        <OrderDetailItemsList
+          items={order.items || []}
+          totalAmount={order.total_amount || 0}
+          discountAmount={order.discount_amount}
+          taxAmount={order.tax_amount}
+        />
 
         {/* Additional Status & Delivery Info */}
         <View style={styles.card}>
@@ -391,7 +241,7 @@ export default function OrderDetailsScreen() {
             router.push({
               pathname: '/sales/orders/reorder' as any,
               params: { orderId: order.id },
-            })
+            } as any)
           }
           style={styles.reorderBtn}
         />
@@ -410,11 +260,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-  },
-  loadingText: {
-    ...Typography.bodyMd,
-    color: Colors.textSecondary,
-    marginTop: 12,
   },
   errorIconBox: {
     width: 64,
@@ -462,101 +307,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     ...Shadows.xs,
   },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  orderNumber: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-  },
-  orderTimestamp: {
-    ...Typography.captionSm,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  pendingNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.goldLight,
-    padding: 12,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.goldTint,
-  },
-  pendingTitle: {
-    ...Typography.labelSm,
-    color: Colors.goldDark,
-    fontWeight: '700',
-  },
-  pendingDesc: {
-    ...Typography.captionSm,
-    color: Colors.goldDark,
-    marginTop: 2,
-  },
-  confirmedNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.secondaryLight,
-    padding: 12,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.secondaryTint,
-  },
-  confirmedTitle: {
-    ...Typography.labelSm,
-    color: Colors.secondary,
-    fontWeight: '700',
-  },
-  confirmedDesc: {
-    ...Typography.captionSm,
-    color: Colors.secondary,
-    marginTop: 2,
-  },
-  rejectedNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.errorBg,
-    padding: 12,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.error + '30',
-  },
-  rejectedTitle: {
-    ...Typography.labelSm,
-    color: Colors.error,
-    fontWeight: '700',
-  },
-  rejectedDesc: {
-    ...Typography.captionSm,
-    color: Colors.error,
-    marginTop: 2,
-  },
-  deliveredNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.secondaryLight,
-    padding: 12,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.secondaryTint,
-  },
-  deliveredTitle: {
-    ...Typography.labelSm,
-    color: Colors.secondary,
-    fontWeight: '700',
-  },
-  deliveredDesc: {
-    ...Typography.captionSm,
-    color: Colors.secondary,
-    marginTop: 2,
-  },
   sectionHeading: {
-    ...Typography.labelLg,
+    ...Typography.h3,
     color: Colors.textPrimary,
-    fontWeight: '700',
     marginBottom: 12,
   },
   storeRow: {
@@ -566,20 +319,19 @@ const styles = StyleSheet.create({
   storeIconBox: {
     width: 44,
     height: 44,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   storeName: {
-    ...Typography.labelLg,
+    ...Typography.bodyBold,
     color: Colors.textPrimary,
-    fontWeight: '700',
   },
   storeOwner: {
-    ...Typography.captionMd,
+    ...Typography.captionSm,
     color: Colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
   },
   storeAddress: {
     ...Typography.captionSm,
@@ -589,136 +341,46 @@ const styles = StyleSheet.create({
   callStoreBtn: {
     width: 38,
     height: 38,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
-    ...Shadows.xs,
-  },
-  itemsHeadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  productImage: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surfaceSecondary,
-  },
-  productPlaceholder: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemName: {
-    ...Typography.labelMd,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  itemMeta: {
-    ...Typography.captionSm,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  itemQtyPrice: {
-    ...Typography.captionSm,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  itemTotal: {
-    ...Typography.labelMd,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  emptyItemsText: {
-    ...Typography.bodySm,
-    color: Colors.textTertiary,
-    fontStyle: 'italic',
-    paddingVertical: 8,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginVertical: 14,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  summaryLabel: {
-    ...Typography.bodySm,
-    color: Colors.textSecondary,
-  },
-  summaryVal: {
-    ...Typography.bodySm,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  finalTotalRow: {
-    marginTop: 8,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  totalLabel: {
-    ...Typography.labelLg,
-    color: Colors.textPrimary,
-    fontWeight: '800',
-  },
-  totalValue: {
-    ...Typography.h2,
-    color: Colors.primary,
-    fontWeight: '800',
   },
   infoGridRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
     gap: 8,
-    paddingVertical: 6,
   },
   infoGridLabel: {
     ...Typography.bodySm,
     color: Colors.textSecondary,
-    fontWeight: '500',
-    width: 120,
+    minWidth: 120,
   },
   infoGridValue: {
     ...Typography.bodySm,
-    color: Colors.textPrimary,
     fontWeight: '600',
+    color: Colors.textPrimary,
     flex: 1,
   },
   notesBox: {
-    marginTop: 10,
+    marginTop: 12,
     padding: 12,
     backgroundColor: Colors.surfaceSecondary,
     borderRadius: Radius.lg,
   },
   notesLabel: {
     ...Typography.captionSm,
+    fontWeight: '600',
     color: Colors.textSecondary,
-    fontWeight: '700',
   },
   notesText: {
     ...Typography.bodySm,
     color: Colors.textPrimary,
-    lineHeight: 18,
   },
   reorderBtn: {
-    marginTop: 4,
+    marginTop: 8,
   },
 });

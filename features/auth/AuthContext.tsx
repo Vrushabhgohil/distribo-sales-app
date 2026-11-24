@@ -1,15 +1,18 @@
 import { offlineStorage } from '@/lib/offline-storage';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
-import { loginSchema, passwordSchema, signUpSchema, updatePasswordSchema } from '@/lib/validation/auth';
+import { loginSchema, passwordSchema, signUpSchema } from '@/lib/validation/auth';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
+import { authStorage, AccountStatus, REMEMBER_ME_KEY } from './auth-storage';
+import { authService } from './auth-service';
+import { logger } from '@/lib/logger';
 
-export type AccountStatus = 'pending' | 'active' | 'inactive';
+export type { AccountStatus };
 
 interface AuthContextType {
   userRole: UserRole | null;
@@ -22,7 +25,7 @@ interface AuthContextType {
     password: string,
     rememberMe?: boolean
   ) => Promise<{ success: boolean; role?: UserRole; accountStatus?: AccountStatus; error?: string }>;
-  signUp: (params: {
+  signUp: (data: {
     fullName: string;
     email: string;
     mobile: string;
@@ -35,63 +38,6 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AUTH_STORAGE_KEY = '@motiba_auth_session';
-const USER_ROLE_KEY = '@motiba_user_role';
-const ACCOUNT_STATUS_KEY = '@motiba_account_status';
-const REMEMBER_ME_KEY = '@motiba_remember_me';
-
-const SALES_PROFILE_COLUMNS =
-  'id, user_id, name, employee_id, photo_url, mobile, email, address, joining_date, assigned_area, status, location_consent_version, location_consent_at, created_at, updated_at' as const;
-
-const DELIVERY_PROFILE_COLUMNS =
-  'id, user_id, name, employee_id, photo_url, mobile, email, address, vehicle_type, vehicle_number, status, location_consent_version, location_consent_at, created_at, updated_at' as const;
-
-type AuthProfileResult =
-  | { role: 'sales_person'; profile: SalesPersonProfile }
-  | { role: 'delivery_person'; profile: DeliveryPersonProfile }
-  | null;
-
-/**
- * Deduplicated helper to fetch user profile strictly by user_id with explicit columns.
- */
-async function fetchProfileByUserId(userId: string): Promise<AuthProfileResult> {
-  const { data: salesProfile, error: salesError } = await supabase
-    .from('sales_person_profiles')
-    .select(SALES_PROFILE_COLUMNS)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (salesError) {
-    console.warn('Error loading sales profile by user_id:', salesError);
-  }
-
-  if (salesProfile) {
-    return {
-      role: 'sales_person',
-      profile: salesProfile as unknown as SalesPersonProfile,
-    };
-  }
-
-  const { data: deliveryProfile, error: deliveryError } = await supabase
-    .from('delivery_person_profiles')
-    .select(DELIVERY_PROFILE_COLUMNS)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (deliveryError) {
-    console.warn('Error loading delivery profile by user_id:', deliveryError);
-  }
-
-  if (deliveryProfile) {
-    return {
-      role: 'delivery_person',
-      profile: deliveryProfile as unknown as DeliveryPersonProfile,
-    };
-  }
-
-  return null;
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -101,70 +47,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [deliveryPerson, setDeliveryPerson] = useState<DeliveryPersonProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const saveSessionData = async (
-    role: UserRole,
-    profile: SalesPersonProfile | DeliveryPersonProfile
-  ) => {
-    await AsyncStorage.setItem(USER_ROLE_KEY, role);
-    await AsyncStorage.setItem(ACCOUNT_STATUS_KEY, profile.status);
-    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-  };
-
-  const clearAllSessionData = async () => {
-    try {
-      await AsyncStorage.multiRemove([
-        AUTH_STORAGE_KEY,
-        USER_ROLE_KEY,
-        ACCOUNT_STATUS_KEY,
-        REMEMBER_ME_KEY,
-      ]);
-    } catch (e) {
-      console.warn('Error clearing auth storage:', e);
-    }
-  };
-
   // Restore authenticated session & auto-detect role on app start
   useEffect(() => {
     let isMounted = true;
 
     const restoreSession = async () => {
       try {
-        const rememberMe = await AsyncStorage.getItem(REMEMBER_ME_KEY);
-        if (rememberMe === 'false') {
-          await clearAllSessionData();
-          if (isMounted) setLoading(false);
-          return;
-        }
-
-        // 1. Check local session cache for instant startup
-        const cachedRole = (await AsyncStorage.getItem(USER_ROLE_KEY)) as UserRole | null;
-        const cachedStatus = (await AsyncStorage.getItem(ACCOUNT_STATUS_KEY)) as AccountStatus | null;
-        const cachedSession = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-
-        if (cachedRole && cachedSession && isMounted) {
-          try {
-            const parsed = JSON.parse(cachedSession);
-            setUserRole(cachedRole);
-            setAccountStatus(cachedStatus || parsed.status || 'active');
-            if (cachedRole === 'sales_person') {
-              setSalesperson(parsed as SalesPersonProfile);
-              setDeliveryPerson(null);
-            } else if (cachedRole === 'delivery_person') {
-              setDeliveryPerson(parsed as DeliveryPersonProfile);
-              setSalesperson(null);
-            }
-          } catch {
-            await clearAllSessionData();
+        const cached = await authStorage.getCachedSession();
+        if (cached.role && cached.profile && isMounted) {
+          setUserRole(cached.role);
+          setAccountStatus(cached.status || cached.profile.status || 'active');
+          if (cached.role === 'sales_person') {
+            setSalesperson(cached.profile as SalesPersonProfile);
+            setDeliveryPerson(null);
+          } else {
+            setDeliveryPerson(cached.profile as DeliveryPersonProfile);
+            setSalesperson(null);
           }
         }
 
-        // 2. Validate with Supabase session strictly by user_id
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (session?.user) {
-          const result = await fetchProfileByUserId(session.user.id);
+          const result = await authService.fetchProfileByUserId(session.user.id);
           if (result) {
             if (result.profile.status === 'inactive') {
               await signOut();
@@ -182,13 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setDeliveryPerson(result.profile as DeliveryPersonProfile);
                 setSalesperson(null);
               }
-              await saveSessionData(result.role, result.profile);
+              await authStorage.saveSessionData(result.role, result.profile);
             }
-            return;
           }
+        } else if (!cached.role) {
+          await authStorage.clearAllSessionData();
         }
       } catch (err) {
-        console.warn('Session restoration exception:', err);
+        logger.warn('Session restoration note:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -196,14 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     restoreSession();
 
-    // Listen to Supabase Auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         return;
       }
 
       if (session?.user) {
-        const result = await fetchProfileByUserId(session.user.id);
+        const result = await authService.fetchProfileByUserId(session.user.id);
         if (result) {
           if (result.profile.status === 'inactive') {
             await signOut();
@@ -219,11 +126,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setDeliveryPerson(result.profile as DeliveryPersonProfile);
             setSalesperson(null);
           }
-          await saveSessionData(result.role, result.profile);
+          await authStorage.saveSessionData(result.role, result.profile);
           return;
         }
       } else if (event === 'SIGNED_OUT') {
-        await clearAllSessionData();
+        await authStorage.clearAllSessionData();
         setUserRole(null);
         setAccountStatus(null);
         setSalesperson(null);
@@ -237,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Unified Sign In with SECURITY DEFINER RPC and Supabase Auth
   const signIn = async (
     identifierInput: string,
     passwordInput: string,
@@ -250,45 +156,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (!validation.success) {
-      const msg = validation.error.issues[0]?.message || 'Invalid credentials.';
-      return { success: false, error: msg };
+      return { success: false, error: validation.error.issues[0]?.message || 'Invalid credentials.' };
     }
-
-    const cleanId = validation.data.identifier;
-    const rawPassword = validation.data.password;
 
     try {
       await AsyncStorage.setItem(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
+      const resolvedEmail = await authService.resolveLoginIdentifier(validation.data.identifier);
 
-      // 1. Resolve identifier to email via SECURITY DEFINER RPC
-      const { data: resolvedEmail, error: rpcError } = await supabase.rpc(
-        'resolve_login_identifier',
-        { p_identifier: cleanId }
-      );
-
-      if (rpcError || !resolvedEmail) {
-        return {
-          success: false,
-          error: 'Incorrect email/ID or password. Please verify and try again.',
-        };
-      }
-
-      // 2. Authenticate strictly via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
-        password: rawPassword,
+        password: validation.data.password,
       });
 
       if (authError || !authData?.user) {
-        return {
-          success: false,
-          error: 'Incorrect email/ID or password. Please verify and try again.',
-        };
+        return { success: false, error: 'Incorrect email/ID or password. Please verify and try again.' };
       }
 
-      // 3. Load profile strictly by user_id with explicit columns
-      const result = await fetchProfileByUserId(authData.user.id);
-
+      const result = await authService.fetchProfileByUserId(authData.user.id);
       if (!result) {
         await supabase.auth.signOut();
         return {
@@ -299,10 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (result.profile.status === 'inactive') {
         await supabase.auth.signOut();
-        return {
-          success: false,
-          error: 'Your account is inactive. Please contact the administrator.',
-        };
+        return { success: false, error: 'Your account is inactive. Please contact the administrator.' };
       }
 
       setAccountStatus(result.profile.status);
@@ -316,14 +197,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSalesperson(null);
       }
 
-      await saveSessionData(result.role, result.profile);
+      await authStorage.saveSessionData(result.role, result.profile);
       return { success: true, role: result.role, accountStatus: result.profile.status };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred during authentication.';
-      return {
-        success: false,
-        error: message,
-      };
+      return { success: false, error: message };
     }
   };
 
@@ -340,7 +218,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string;
     assignedArea?: string;
   }): Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }> => {
-    // Validate inputs
     const validation = signUpSchema.safeParse({
       fullName,
       email,
@@ -352,19 +229,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (!validation.success) {
-      return {
-        success: false,
-        error: validation.error.issues[0]?.message || 'Invalid signup details.',
-      };
+      return { success: false, error: validation.error.issues[0]?.message || 'Invalid signup details.' };
     }
 
-    const cleanEmail = validation.data.email;
-    const cleanMobile = validation.data.mobile;
-    const cleanName = validation.data.fullName;
-    const rawPassword = validation.data.password;
+    const { email: cleanEmail, mobile: cleanMobile, fullName: cleanName, password: rawPassword } = validation.data;
 
     try {
-      // 1. Check duplicate mobile or email in sales_person_profiles
       const { data: existingMobile } = await supabase
         .from('sales_person_profiles')
         .select('id, name')
@@ -372,10 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (existingMobile) {
-        return {
-          success: false,
-          error: `Mobile number ${cleanMobile} is already registered (${existingMobile.name}).`,
-        };
+        return { success: false, error: `Mobile number ${cleanMobile} is already registered (${existingMobile.name}).` };
       }
 
       const { data: existingEmail } = await supabase
@@ -385,14 +252,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (existingEmail && existingEmail.user_id) {
-        return {
-          success: false,
-          error: `Email address ${cleanEmail} is already registered to ${existingEmail.name}.`,
-        };
+        return { success: false, error: `Email address ${cleanEmail} is already registered to ${existingEmail.name}.` };
       }
 
-      // 2. Register user through Supabase Auth without client role metadata.
-      // Server-side auth.users trigger creates the pending profile and generates employee_id sequence.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: rawPassword,
@@ -410,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (authData?.user) {
-        const result = await fetchProfileByUserId(authData.user.id);
+        const result = await authService.fetchProfileByUserId(authData.user.id);
         if (result) {
           setUserRole(result.role);
           setAccountStatus(result.profile.status);
@@ -421,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setDeliveryPerson(result.profile as DeliveryPersonProfile);
             setSalesperson(null);
           }
-          await saveSessionData(result.role, result.profile);
+          await authStorage.saveSessionData(result.role, result.profile);
         } else {
           setUserRole('sales_person');
           setAccountStatus('pending');
@@ -452,10 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         return { success: false, error: error.message };
       }
-      return {
-        success: true,
-        message: 'Password reset link sent! Check your inbox to set a new password.',
-      };
+      return { success: true, message: 'Password reset link sent! Check your inbox to set a new password.' };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to send password reset email.';
       return { success: false, error: message };
@@ -468,10 +327,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const validation = passwordSchema.safeParse(newPassword);
       if (!validation.success) {
-        return {
-          success: false,
-          error: validation.error.issues[0]?.message || 'Password must be at least 10 characters long.',
-        };
+        return { success: false, error: validation.error.issues[0]?.message || 'Password must be at least 10 characters long.' };
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -493,9 +349,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
     } catch (err) {
-      console.warn('Supabase sign-out error:', err);
+      logger.warn('Supabase sign-out error:', err);
     } finally {
-      // 1. Unregister background location updates and stop tracking telemetry on sign-out
       try {
         if (Platform.OS !== 'web') {
           const isRegistered = await TaskManager.isTaskRegisteredAsync('MOTIBA_BACKGROUND_LOCATION_TASK');
@@ -505,19 +360,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         await AsyncStorage.removeItem('@motiba_shift_active');
       } catch (locErr) {
-        console.warn('Error unregistering background location on sign out:', locErr);
+        logger.warn('Error unregistering background location on sign out:', locErr);
       }
 
-      await clearAllSessionData();
+      await authStorage.clearAllSessionData();
       try {
         await offlineStorage.wipeAllData();
       } catch (e) {
-        console.warn('Error wiping offline storage on sign out:', e);
+        logger.warn('Error wiping offline storage on sign out:', e);
       }
       try {
         queryClient.clear();
       } catch (e) {
-        console.warn('Error clearing query cache:', e);
+        logger.warn('Error clearing query cache:', e);
       }
       setUserRole(null);
       setAccountStatus(null);
@@ -536,7 +391,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const result = await fetchProfileByUserId(session.user.id);
+      const result = await authService.fetchProfileByUserId(session.user.id);
       if (result) {
         if (result.profile.status === 'inactive') {
           await signOut();
@@ -545,14 +400,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAccountStatus(result.profile.status);
         if (result.role === 'sales_person') {
           setSalesperson(result.profile as SalesPersonProfile);
-          await saveSessionData('sales_person', result.profile);
+          await authStorage.saveSessionData('sales_person', result.profile);
         } else {
           setDeliveryPerson(result.profile as DeliveryPersonProfile);
-          await saveSessionData('delivery_person', result.profile);
+          await authStorage.saveSessionData('delivery_person', result.profile);
         }
       }
     } catch (err) {
-      console.warn('Failed to refresh profile:', err);
+      logger.warn('Failed to refresh profile:', err);
     }
   };
 

@@ -12,6 +12,7 @@ import { Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { CustomAlertProvider } from '@/components/ui/CustomAlert';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 function RouteGuard() {
   const { userRole, accountStatus, loading } = useAuth();
@@ -112,19 +113,21 @@ export default function RootLayout() {
   });
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <OfflineSyncProvider>
-            <LocationTrackerProvider>
-              <CustomAlertProvider>
-                <StatusBar style="dark" />
-                <RouteGuard />
-              </CustomAlertProvider>
-            </LocationTrackerProvider>
-          </OfflineSyncProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <OfflineSyncProvider>
+              <LocationTrackerProvider>
+                <CustomAlertProvider>
+                  <StatusBar style="dark" />
+                  <RouteGuard />
+                </CustomAlertProvider>
+              </LocationTrackerProvider>
+            </OfflineSyncProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

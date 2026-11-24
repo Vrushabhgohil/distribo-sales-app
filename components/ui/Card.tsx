@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, ViewProps, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewProps, ViewStyle, TouchableOpacity } from 'react-native';
 import { Colors, Radius, Shadows } from '@/constants/theme';
 
-interface CardProps extends ViewProps {
+export interface CardProps extends ViewProps {
+  children: React.ReactNode;
   style?: ViewStyle;
-  variant?: 'elevated' | 'flat' | 'outlined' | 'tinted';
+  variant?: 'default' | 'elevated' | 'flat' | 'outlined' | 'tinted';
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  onPress?: () => void;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -13,9 +15,11 @@ export const Card: React.FC<CardProps> = ({
   style,
   variant = 'elevated',
   padding = 'md',
+  onPress,
   ...rest
 }) => {
   const variantStyle: Record<string, ViewStyle> = {
+    default: { backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border, ...Shadows.sm },
     elevated: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderLight, ...Shadows.sm },
     flat: { backgroundColor: Colors.surfaceSecondary },
     outlined: { backgroundColor: Colors.surface, borderWidth: 1.2, borderColor: Colors.border },
@@ -29,8 +33,23 @@ export const Card: React.FC<CardProps> = ({
     lg: { padding: 20 },
   };
 
+  const resolvedVariant = variantStyle[variant] || variantStyle.elevated;
+  const resolvedPadding = paddingStyle[padding] || paddingStyle.md;
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={[styles.base, resolvedVariant, resolvedPadding, style]}
+      >
+        {children}
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <View style={[styles.base, variantStyle[variant], paddingStyle[padding], style]} {...rest}>
+    <View style={[styles.base, resolvedVariant, resolvedPadding, style]} {...rest}>
       {children}
     </View>
   );
