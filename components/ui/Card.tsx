@@ -19,11 +19,11 @@ export const Card: React.FC<CardProps> = ({
   ...rest
 }) => {
   const variantStyle: Record<string, ViewStyle> = {
-    default: { backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border, ...Shadows.sm },
+    default: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderLight, ...Shadows.xs },
     elevated: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.borderLight, ...Shadows.sm },
     flat: { backgroundColor: Colors.surfaceSecondary },
-    outlined: { backgroundColor: Colors.surface, borderWidth: 1.2, borderColor: Colors.border },
-    tinted: { backgroundColor: Colors.primarySoft, borderWidth: 1, borderColor: Colors.primary + '20' },
+    outlined: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
+    tinted: { backgroundColor: Colors.primarySoft, borderWidth: 1, borderColor: Colors.primary + '15' },
   };
 
   const paddingStyle: Record<string, ViewStyle> = {

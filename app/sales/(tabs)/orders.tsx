@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     width: 42,
     height: 42,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.sm,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderLight,
     marginBottom: 12,
-    ...Shadows.xs,
+    ...Shadows.sm,
   },
   cardHeader: {
     flexDirection: 'row',

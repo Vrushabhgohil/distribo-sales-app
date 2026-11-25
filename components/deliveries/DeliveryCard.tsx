@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Truck,
 } from 'lucide-react-native';
-import { Colors, Spacing, BorderRadius, Typography } from '@/constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadows } from '@/constants/theme';
 import { DeliveryAssignment } from '@/types';
 import { Badge } from '@/components/common/Badge';
 
@@ -129,17 +129,13 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({ assignment }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.md + 2,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     marginBottom: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...Shadows.sm,
   },
   cardHeader: {
     flexDirection: 'row',

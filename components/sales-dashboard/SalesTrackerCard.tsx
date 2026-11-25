@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: Radius['2xl'],
+    borderRadius: Radius.xl,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   trackerIconBox: {
     width: 44,
     height: 44,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,

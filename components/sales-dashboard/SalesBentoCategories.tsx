@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   bentoCard: {
     width: '48%',
     flexGrow: 1,
-    borderRadius: Radius['2xl'],
+    borderRadius: Radius.xl,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',

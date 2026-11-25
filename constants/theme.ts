@@ -28,15 +28,15 @@ export const Colors = {
   secondaryTint: '#DFEFE4',   // Fresh Green Tint
 
   // Surfaces & Backgrounds
-  background: '#FAF7F2',      // Smoky Pearl Base (Matching Admin Panel)
-  surface: '#FFFFFF',         // Pure White (Cards and surfaces)
-  surfaceSecondary: '#F8F4ED',// Soft Pearl / Secondary background
-  surfaceTertiary: '#FFFDF8', // Pure Ivory Surface
+  background: '#F9F6F0',      // Soft, warm premium canvas background (Hungerz clean style)
+  surface: '#FFFFFF',         // Pure Crisp White (Cards and surfaces)
+  surfaceSecondary: '#F3EFE6',// Subtle Pearl Gray-Beige
+  surfaceTertiary: '#FAFAF7', // Bright Off-White
   softWheat: '#F1DDAF',       // Soft Wheat Accent
-  warmIvory: '#FAF7F2',       // Smoky Warm Ivory
-  card: '#FFFFFF',            // Pure White Card
-  cardElevated: '#FFFFFF',    // Pure White Elevated
-  overlay: 'rgba(73, 48, 39, 0.5)', // Earthy Brown overlay
+  warmIvory: '#F9F6F0',       // Warm Ivory Canvas
+  card: '#FFFFFF',            // Crisp White Card
+  cardElevated: '#FFFFFF',    // Crisp White Elevated Card
+  overlay: 'rgba(29, 19, 14, 0.45)', // Earthy Overlay
 
   // Typography
   text: '#493027',            // Earthy Brown (Headings and text)
@@ -49,9 +49,9 @@ export const Colors = {
   textGold: '#D9A52E',        // Heritage Gold Text
 
   // Borders & Dividers
-  border: '#E9E0D2',          // Soft Beige (Borders and dividers)
-  borderLight: '#F3EDE3',     // Light Soft Beige
-  borderSubtle: '#F8F4ED',    // Very Subtle Beige
+  border: '#ECE6DC',          // Light, soft, modern border
+  borderLight: '#F3EDE4',     // Ultra-subtle hairline border
+  borderSubtle: '#F7F3EC',    // Barely visible divider
   borderFocus: '#970F18',     // Royal Maroon Active Focus
   borderStrong: '#D5C8B4',    // Strong Beige Divider
   borderGold: '#D9A52E',      // Heritage Gold Border
@@ -185,8 +185,8 @@ export const Radius = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 20,
-  '2xl': 24,
+  xl: 18,
+  '2xl': 22,
   '3xl': 28,
   full: 9999,
 };
@@ -194,6 +194,7 @@ export const Radius = {
 export const BorderRadius = Radius;
 
 // ─── SHADOWS ────────────────────────────────────────────────────
+// Refined ambient, soft, modern shadows inspired by premium eCommerce templates (Hungerz)
 export const Shadows = {
   none: {
     shadowColor: 'transparent',
@@ -203,38 +204,38 @@ export const Shadows = {
     elevation: 0,
   },
   xs: {
-    shadowColor: '#493027',
+    shadowColor: '#1A0E08',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 1,
   },
   sm: {
-    shadowColor: '#493027',
+    shadowColor: '#1A0E08',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
     elevation: 2,
   },
   md: {
-    shadowColor: '#493027',
+    shadowColor: '#1A0E08',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
     elevation: 3,
   },
   lg: {
-    shadowColor: '#493027',
+    shadowColor: '#1A0E08',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 14,
+    shadowOpacity: 0.09,
+    shadowRadius: 16,
     elevation: 5,
   },
   xl: {
-    shadowColor: '#493027',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
+    shadowColor: '#1A0E08',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 8,
   },
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Search, X, SlidersHorizontal } from 'lucide-react-native';
-import { Colors, Radius, Typography } from '@/constants/theme';
+import { Colors, Radius, Typography, Shadows } from '@/constants/theme';
 
 interface SearchBarProps {
   value: string;
@@ -69,7 +69,8 @@ const styles = StyleSheet.create({
     height: 48,
     gap: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
+    ...Shadows.xs,
   },
   input: {
     flex: 1,
@@ -84,7 +85,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
+    ...Shadows.xs,
   },
 });
 
