@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,6 +18,8 @@ import {
   Repeat,
   Store as StoreIcon,
   Phone,
+  Navigation,
+  MapPin,
   Truck,
   CreditCard,
   ShieldCheck,
@@ -46,6 +49,41 @@ export default function OrderDetailsScreen() {
     if (phone) {
       const sanitized = encodeURIComponent(phone.trim().replace(/[^\d+]/g, ''));
       Linking.openURL(`tel:${sanitized}`);
+    }
+  };
+
+  const handleOpenDirections = () => {
+    const store = order?.store;
+    if (!store) return;
+
+    if (store.gps_lat && store.gps_lng) {
+      const lat = encodeURIComponent(String(store.gps_lat));
+      const lng = encodeURIComponent(String(store.gps_lng));
+      const label = encodeURIComponent(store.name || 'Store Location');
+      const scheme = Platform.select({
+        ios: `maps:0,0?q=${label}@${lat},${lng}`,
+        android: `geo:0,0?q=${lat},${lng}(${label})`,
+      });
+      if (scheme) {
+        Linking.canOpenURL(scheme)
+          .then((supported) => {
+            if (supported) {
+              Linking.openURL(scheme);
+            } else {
+              Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+            }
+          })
+          .catch(() => {
+            Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+          });
+        return;
+      }
+    }
+
+    const addressParts = [store.name, store.address, store.area, store.city, store.pincode].filter(Boolean);
+    if (addressParts.length > 0) {
+      const query = encodeURIComponent(addressParts.join(', '));
+      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
     }
   };
 
@@ -164,25 +202,44 @@ export default function OrderDetailsScreen() {
             <View style={styles.storeIconBox}>
               <StoreIcon size={20} color={Colors.primary} />
             </View>
-            <View style={{ marginLeft: 12, flex: 1 }}>
+            <View style={{ marginLeft: 12, flex: 1, paddingRight: 8 }}>
               <Text style={styles.storeName}>{order.store?.name || 'Retail Outlet'}</Text>
               {order.store?.owner_name && (
                 <Text style={styles.storeOwner}>Owner: {order.store.owner_name}</Text>
               )}
-              <Text style={styles.storeAddress}>
-                {[order.store?.address, order.store?.area, order.store?.city].filter(Boolean).join(', ') || 'Address not available'}
-              </Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleOpenDirections}
+                style={styles.addressRow}
+              >
+                <MapPin size={13} color={Colors.primary} style={{ marginRight: 4, marginTop: 1 }} />
+                <Text style={styles.storeAddress} numberOfLines={2}>
+                  {[order.store?.address, order.store?.area, order.store?.city].filter(Boolean).join(', ') || 'Address not available'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            {order.store?.mobile && (
+            <View style={styles.storeActions}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => handleCallStore(order.store?.mobile)}
-                style={styles.callStoreBtn}
+                onPress={handleOpenDirections}
+                style={styles.directionsBtn}
+                accessibilityLabel="Navigate to store location"
               >
-                <Phone size={16} color={Colors.white} />
+                <Navigation size={16} color={Colors.white} />
               </TouchableOpacity>
-            )}
+
+              {order.store?.mobile && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleCallStore(order.store?.mobile)}
+                  style={styles.callStoreBtn}
+                  accessibilityLabel="Call store"
+                >
+                  <Phone size={16} color={Colors.white} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -335,8 +392,27 @@ const styles = StyleSheet.create({
   },
   storeAddress: {
     ...Typography.captionSm,
-    color: Colors.textTertiary,
-    marginTop: 2,
+    color: Colors.textSecondary,
+    flex: 1,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 4,
+  },
+  storeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  directionsBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.xs,
   },
   callStoreBtn: {
     width: 38,
@@ -345,6 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.xs,
   },
   infoGridRow: {
     flexDirection: 'row',

@@ -4,10 +4,10 @@ import { Product, Category, Brand } from '@/types';
 import { logger } from '@/lib/logger';
 
 export const PRODUCT_COLUMNS =
-  'id, name, sku, barcode, image_url, brand_id, category_id, sub_category, description, pack_size, unit, mrp, selling_price, distributor_price, min_order_qty, max_order_qty, tax_rate, is_active, status, created_at, updated_at' as const;
+  'id, name, sku, barcode, image_url, brand_id, category_id, sub_category, description, pack_size, unit, mrp, selling_price, distributor_price, min_order_qty, max_order_qty, gst_percentage, status, created_at, updated_at' as const;
 
 export const CATEGORY_COLUMNS =
-  'id, name, code, description, image_url, status, created_at, updated_at' as const;
+  'id, name, description, status, created_at, updated_at' as const;
 
 export const BRAND_COLUMNS =
   'id, name, description, logo_url, status, created_at, updated_at' as const;

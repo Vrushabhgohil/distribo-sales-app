@@ -30,7 +30,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   icon,
   iconPosition = 'left',
-  fullWidth = true,
+  fullWidth = false,
   disabled,
   style,
   textStyle,

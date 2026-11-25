@@ -82,10 +82,6 @@ function RouteGuard() {
     }
   }, [userRole, accountStatus, loading, segments, router]);
 
-  if (loading) {
-    return <MotibaLoader fullscreen message="Initializing Motiba Sales Suite..." />;
-  }
-
   return (
     <Stack
       screenOptions={{

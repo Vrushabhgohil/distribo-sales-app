@@ -111,7 +111,7 @@ export const MotibaLoader: React.FC<MotibaLoaderProps> = ({
           ]}
         >
           <Image
-            source={require('@/assets/images/motiba-full-logo.png')}
+            source={require('@/assets/images/logo.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
@@ -197,12 +197,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(151, 15, 24, 0.07)',
   },
   logoContainer: {
-    width: 240,
-    height: 90,
+    width: 96,
+    height: 96,
+    borderRadius: Radius['2xl'],
+    backgroundColor: Colors.surface,
     marginBottom: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.sm,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...Shadows.md,
   },
   logoImage: {
     width: '100%',

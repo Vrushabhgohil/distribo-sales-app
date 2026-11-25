@@ -22,6 +22,7 @@ import {
 import { useState } from 'react';
 import {
   Linking,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -84,6 +85,38 @@ export default function StoreDetailsScreen() {
     if (store?.mobile) {
       const sanitized = encodeURIComponent(store.mobile.trim().replace(/[^\d+]/g, ''));
       Linking.openURL(`tel:${sanitized}`);
+    }
+  };
+
+  const openDirections = () => {
+    if (!store) return;
+    if (store.gps_lat && store.gps_lng) {
+      const lat = encodeURIComponent(String(store.gps_lat));
+      const lng = encodeURIComponent(String(store.gps_lng));
+      const label = encodeURIComponent(store.name || 'Store Location');
+      const scheme = Platform.select({
+        ios: `maps:0,0?q=${label}@${lat},${lng}`,
+        android: `geo:0,0?q=${lat},${lng}(${label})`,
+      });
+      if (scheme) {
+        Linking.canOpenURL(scheme)
+          .then((supported) => {
+            if (supported) {
+              Linking.openURL(scheme);
+            } else {
+              Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+            }
+          })
+          .catch(() => {
+            Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+          });
+        return;
+      }
+    }
+    const addressParts = [store.name, store.address, store.area, store.city, store.pincode].filter(Boolean);
+    if (addressParts.length > 0) {
+      const query = encodeURIComponent(addressParts.join(', '));
+      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
     }
   };
 
@@ -235,12 +268,13 @@ export default function StoreDetailsScreen() {
               </View>
             )}
 
-            <View style={styles.infoRow}>
-              <MapPin size={15} color={Colors.textTertiary} />
-              <Text style={styles.infoText}>
+            <TouchableOpacity activeOpacity={0.7} onPress={openDirections} style={styles.infoRow}>
+              <MapPin size={15} color={Colors.primary} />
+              <Text style={[styles.infoText, { color: Colors.primary, fontWeight: '600', flex: 1 }]}>
                 {store.address}, {store.area}, {store.city} - {store.pincode}
               </Text>
-            </View>
+              <Navigation size={14} color={Colors.primary} style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
 
             {store.gst_number && (
               <View style={styles.infoRow}>

@@ -110,13 +110,14 @@ export default function CreateOrderScreen() {
                   </View>
 
                   {inCartQty === 0 ? (
-                    <Button
-                      title="Add"
-                      variant="outline"
-                      size="sm"
-                      icon={<Plus size={14} color={Colors.primary} />}
+                    <TouchableOpacity
+                      activeOpacity={0.8}
                       onPress={() => updateQuantity(product.id, minQty, minQty)}
-                    />
+                      style={styles.addBtnPill}
+                    >
+                      <Plus size={14} color={Colors.primary} />
+                      <Text style={styles.addBtnText}>Add</Text>
+                    </TouchableOpacity>
                   ) : (
                     <View style={styles.qtyControl}>
                       <TouchableOpacity
@@ -202,6 +203,7 @@ export default function CreateOrderScreen() {
           title={submitting ? 'Placing Order...' : `Book Order (₹${totalOrderAmount.toLocaleString('en-IN')})`}
           variant="primary"
           size="xl"
+          fullWidth
           loading={submitting}
           disabled={submitting || cartItems.length === 0 || !selectedStoreId}
           onPress={submitOrder}
@@ -259,29 +261,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
   productDetails: {
     flex: 1,
-    marginRight: 12,
+    paddingRight: 12,
   },
   productName: {
     ...Typography.bodyMd,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   productMeta: {
     ...Typography.captionSm,
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
   },
   minQtyLabel: {
     ...Typography.captionSm,
     color: Colors.primary,
-    fontWeight: '500',
-    marginTop: 2,
+    fontWeight: '600',
+    marginTop: 3,
+  },
+  addBtnPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1.2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surface,
+  },
+  addBtnText: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    fontSize: 13,
   },
   qtyControl: {
     flexDirection: 'row',
