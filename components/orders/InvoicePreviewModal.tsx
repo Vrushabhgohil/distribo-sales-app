@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   logoImg: {
-    width: 48,
-    height: 48,
+    width: 72,
+    height: 54,
   },
   badge: {
     backgroundColor: Colors.goldLight,

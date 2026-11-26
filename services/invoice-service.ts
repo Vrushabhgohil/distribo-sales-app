@@ -1,9 +1,9 @@
+import { Order } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Asset } from 'expo-asset';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Image, Platform, Share } from 'react-native';
-import { Order } from '@/types';
 
 const INVOICE_STORAGE_PREFIX = '@motiba_invoice_';
 
@@ -210,18 +210,18 @@ export const invoiceService = {
     const rowsHtml =
       items.length > 0
         ? items
-            .map((item, idx) => {
-              const name = escapeHtml(item.product?.name || 'Product');
-              const sku = escapeHtml(item.product?.sku || 'N/A');
-              const pack = escapeHtml(
-                [item.product?.pack_size, item.product?.unit].filter(Boolean).join(' ')
-              );
-              const qty = item.quantity || 0;
-              const unitPrice = (item.unit_price || 0).toLocaleString('en-IN');
-              const lineTotal = (item.total_price || qty * (item.unit_price || 0)).toLocaleString(
-                'en-IN'
-              );
-              return `
+          .map((item, idx) => {
+            const name = escapeHtml(item.product?.name || 'Product');
+            const sku = escapeHtml(item.product?.sku || 'N/A');
+            const pack = escapeHtml(
+              [item.product?.pack_size, item.product?.unit].filter(Boolean).join(' ')
+            );
+            const qty = item.quantity || 0;
+            const unitPrice = (item.unit_price || 0).toLocaleString('en-IN');
+            const lineTotal = (item.total_price || qty * (item.unit_price || 0)).toLocaleString(
+              'en-IN'
+            );
+            return `
                 <tr>
                   <td class="center">${idx + 1}</td>
                   <td>
@@ -233,8 +233,8 @@ export const invoiceService = {
                   <td class="num bold">&#8377;${lineTotal}</td>
                 </tr>
               `;
-            })
-            .join('')
+          })
+          .join('')
         : `<tr><td colspan="5" style="text-align:center;color:#795B50;padding:18px;">No line items recorded</td></tr>`;
 
     return `<!DOCTYPE html>
@@ -476,17 +476,15 @@ export const invoiceService = {
   </table>
 
   <div class="bottom-section">
-    ${
-      order.notes
+    ${order.notes
         ? `<div class="notes-box"><div class="box-label" style="margin-bottom:4px;">Order Notes</div>${escapeHtml(order.notes)}</div>`
         : '<div style="flex:1;"></div>'
-    }
+      }
     <div class="totals">
       <div class="tot-row"><span>Subtotal</span><span>&#8377;${subtotal.toLocaleString('en-IN')}</span></div>
-      ${
-        discountAmount > 0
-          ? `<div class="tot-row tot-discount"><span>Order Discount</span><span>-&#8377;${discountAmount.toLocaleString('en-IN')}</span></div>`
-          : ''
+      ${discountAmount > 0
+        ? `<div class="tot-row tot-discount"><span>Order Discount</span><span>-&#8377;${discountAmount.toLocaleString('en-IN')}</span></div>`
+        : ''
       }
       <div class="tot-row"><span>Applicable Taxes (GST)</span><span>&#8377;${Math.round(taxAmount).toLocaleString('en-IN')}</span></div>
       <div class="tot-row tot-final"><span>Final Payable</span><span>&#8377;${Math.round(finalTotal).toLocaleString('en-IN')}</span></div>
@@ -500,8 +498,50 @@ export const invoiceService = {
     try {
       const logoDataUri = await getLogoDataUri();
       const html = this.buildInvoiceHtml(order, logoDataUri);
-      if (Platform.OS === 'web') {
-        await Print.printAsync({ html });
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        await new Promise<void>((resolve, reject) => {
+          const iframe = document.createElement('iframe');
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+
+          const doc = iframe.contentWindow?.document;
+          if (!doc) {
+            document.body.removeChild(iframe);
+            reject(new Error('Unable to initialize print frame.'));
+            return;
+          }
+
+          doc.open();
+          doc.write(html);
+          doc.close();
+
+          const triggerPrint = () => {
+            try {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+            } finally {
+              setTimeout(() => {
+                if (iframe.parentNode) {
+                  iframe.parentNode.removeChild(iframe);
+                }
+              }, 1000);
+              resolve();
+            }
+          };
+
+          const imgs = doc.images;
+          if (imgs && imgs.length > 0 && !imgs[0].complete) {
+            imgs[0].onload = () => setTimeout(triggerPrint, 100);
+            imgs[0].onerror = () => setTimeout(triggerPrint, 100);
+          } else {
+            setTimeout(triggerPrint, 150);
+          }
+        });
         return { success: true };
       }
       const { uri } = await Print.printToFileAsync({ html });
