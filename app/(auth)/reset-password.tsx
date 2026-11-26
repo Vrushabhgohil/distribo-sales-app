@@ -44,8 +44,8 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    if (password.length < 10) {
-      setErrorMessage('Password must be at least 10 characters long.');
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
       return;
     }
 
@@ -130,7 +130,7 @@ export default function ResetPasswordScreen() {
 
             <Input
               label="New Password"
-              placeholder="Enter at least 10 characters"
+              placeholder="Enter at least 8 characters"
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={(t) => {

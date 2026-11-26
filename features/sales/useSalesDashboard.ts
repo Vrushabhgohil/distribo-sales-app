@@ -7,6 +7,7 @@ import {
   useTodayVisits,
   useActiveVisit,
   useNotifications,
+  useFollowUps,
 } from '@/features/hooks/useMotibaQueries';
 import { useMemo, useState } from 'react';
 
@@ -21,6 +22,7 @@ export function useSalesDashboard() {
   const { data: todayVisits = [], refetch: refetchVisits } = useTodayVisits(salesperson?.id);
   const { data: activeVisit = null, refetch: refetchActiveVisit } = useActiveVisit(salesperson?.id);
   const { data: notifications = [], refetch: refetchNotifs } = useNotifications();
+  const { data: followUps = [], refetch: refetchFollowUps } = useFollowUps(salesperson?.id);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -31,6 +33,7 @@ export function useSalesDashboard() {
       refetchVisits(),
       refetchActiveVisit(),
       refetchNotifs(),
+      refetchFollowUps(),
     ]);
     setRefreshing(false);
   };
@@ -50,6 +53,42 @@ export function useSalesDashboard() {
     [notifications]
   );
 
+  const visitStatusByStoreId = useMemo(() => {
+    const map = new Map<string, 'on_visit' | 'completed' | 'pending'>();
+    todayVisits.forEach((v) => {
+      if (!v.check_out_time) {
+        map.set(v.store_id, 'on_visit');
+      } else if (map.get(v.store_id) !== 'on_visit') {
+        map.set(v.store_id, 'completed');
+      }
+    });
+    if (activeVisit) {
+      map.set(activeVisit.store_id, 'on_visit');
+    }
+    return map;
+  }, [todayVisits, activeVisit]);
+
+  const completedVisitsToday = useMemo(() => {
+    const completedStoreIds = new Set(
+      todayVisits.filter((v) => !!v.check_out_time).map((v) => v.store_id)
+    );
+    return completedStoreIds.size;
+  }, [todayVisits]);
+
+  const pendingVisitsToday = useMemo(() => {
+    return Math.max(0, stores.length - completedVisitsToday);
+  }, [stores.length, completedVisitsToday]);
+
+  const pendingFollowUpsCount = useMemo(() => {
+    return followUps.filter((f) => f.status !== 'completed' && f.status !== 'cancelled').length;
+  }, [followUps]);
+
+  const upcomingFollowUps = useMemo(() => {
+    return followUps
+      .filter((f) => f.status !== 'completed' && f.status !== 'cancelled' && f.follow_up_date >= todayDateStr)
+      .slice(0, 5);
+  }, [followUps, todayDateStr]);
+
   const bestsellers = useMemo(() => products.slice(0, 6), [products]);
 
   return {
@@ -62,6 +101,11 @@ export function useSalesDashboard() {
     todaySalesAmount,
     todayVisits,
     activeVisit,
+    visitStatusByStoreId,
+    completedVisitsToday,
+    pendingVisitsToday,
+    pendingFollowUpsCount,
+    upcomingFollowUps,
     notifications,
     unreadNotifCount,
     bestsellers,

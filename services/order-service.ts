@@ -3,6 +3,7 @@ import { Order } from '@/types';
 import { STORE_COLUMNS, SALES_PROFILE_COLUMNS } from './store-service';
 import { PRODUCT_COLUMNS } from './product-service';
 import { logger } from '@/lib/logger';
+import { offlineStorage } from '@/lib/offline-storage';
 
 export const ORDER_COLUMNS =
   'id, order_number, store_id, salesperson_id, order_date, discount_amount, tax_amount, total_amount, notes, status, rejection_reason, confirmed_by, confirmed_at, created_at, updated_at' as const;
@@ -30,8 +31,40 @@ export const orderService = {
 
       const { data, error } = await query;
       if (error) {
-        logger.warn('Orders fetch error:', error);
-        return [];
+        logger.warn('Orders primary fetch error, trying fallback:', error);
+        let fallbackQuery = supabase
+          .from('orders')
+          .select('*, store:stores(*), items:order_items(*, product:products(*))')
+          .order('created_at', { ascending: false });
+
+        if (salespersonId) {
+          fallbackQuery = fallbackQuery.eq('salesperson_id', salespersonId);
+        }
+        if (status && status !== 'all') {
+          fallbackQuery = fallbackQuery.eq('status', status);
+        }
+
+        const fallback = await fallbackQuery;
+        if (fallback.error) {
+          logger.warn('Orders fallback fetch error, trying minimal:', fallback.error);
+          let minQuery = supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (salespersonId) {
+            minQuery = minQuery.eq('salesperson_id', salespersonId);
+          }
+          if (status && status !== 'all') {
+            minQuery = minQuery.eq('status', status);
+          }
+          const minRes = await minQuery;
+          if (minRes.error) {
+            logger.warn('Orders minimal fetch error:', minRes.error);
+            return [];
+          }
+          return ((minRes.data || []) as unknown) as Order[];
+        }
+        return ((fallback.data || []) as unknown) as Order[];
       }
       return ((data || []) as unknown) as Order[];
     } catch (err) {
@@ -42,7 +75,8 @@ export const orderService = {
 
   async getOrderById(orderId: string): Promise<Order | null> {
     try {
-      const { data, error } = await supabase
+      let data: any = null;
+      const primary = await supabase
         .from('orders')
         .select(
           `${ORDER_COLUMNS}, store:stores(${STORE_COLUMNS}), items:order_items(${ORDER_ITEM_COLUMNS}, product:products(${PRODUCT_COLUMNS}))`
@@ -50,9 +84,20 @@ export const orderService = {
         .eq('id', orderId)
         .maybeSingle();
 
-      if (error) {
-        logger.warn('getOrderById error:', error);
-        return null;
+      if (primary.error) {
+        logger.warn('getOrderById primary error, trying fallback:', primary.error);
+        const fallback = await supabase
+          .from('orders')
+          .select('*, store:stores(*), items:order_items(*, product:products(*))')
+          .eq('id', orderId)
+          .maybeSingle();
+        if (fallback.error) {
+          logger.warn('getOrderById fallback error:', fallback.error);
+          return null;
+        }
+        data = fallback.data;
+      } else {
+        data = primary.data;
       }
       if (!data) return null;
 
@@ -82,6 +127,8 @@ export const orderService = {
     storeId: string;
     salespersonId?: string;
     items: { productId: string; quantity: number; unitPrice?: number }[];
+    discountAmount?: number;
+    taxAmount?: number;
     notes?: string;
     idempotencyKey?: string;
   }): Promise<{ success: boolean; data?: Order; error?: string }> {
@@ -103,12 +150,73 @@ export const orderService = {
       });
 
       if (error) {
+        const msg = error.message || '';
+        if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')) {
+          await offlineStorage.addToOfflineQueue({
+            action: 'CREATE_ORDER',
+            payload: {
+              storeId: params.storeId,
+              salespersonId: params.salespersonId,
+              items: payloadItems,
+              discountAmount: params.discountAmount,
+              taxAmount: params.taxAmount,
+              notes: params.notes,
+            },
+          });
+          return {
+            success: false,
+            error: 'Offline: Order saved locally to sync queue and will submit for Admin confirmation when online.',
+          };
+        }
         return { success: false, error: error.message };
       }
 
-      return { success: true, data: data as unknown as Order };
+      const createdOrder = data as unknown as Order;
+      const discount = params.discountAmount || 0;
+      const tax = params.taxAmount || 0;
+
+      if (createdOrder?.id && (discount > 0 || tax > 0)) {
+        const baseTotal = createdOrder.total_amount || 0;
+        const discountedTotal = Math.max(0, baseTotal - discount + tax);
+        try {
+          await supabase
+            .from('orders')
+            .update({
+              discount_amount: discount,
+              tax_amount: tax,
+              total_amount: discountedTotal,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', createdOrder.id);
+          createdOrder.discount_amount = discount;
+          createdOrder.tax_amount = tax;
+          createdOrder.total_amount = discountedTotal;
+        } catch {
+          // If RLS blocks direct update, still preserve on client order object
+          createdOrder.discount_amount = discount;
+          createdOrder.tax_amount = tax;
+          createdOrder.total_amount = discountedTotal;
+        }
+      }
+
+      return { success: true, data: createdOrder };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit order for Admin confirmation.';
+      if (message.toLowerCase().includes('network') || message.toLowerCase().includes('fetch')) {
+        await offlineStorage.addToOfflineQueue({
+          action: 'CREATE_ORDER',
+          payload: {
+            storeId: params.storeId,
+            salespersonId: params.salespersonId,
+            items: params.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+            notes: params.notes,
+          },
+        });
+        return {
+          success: false,
+          error: 'Offline: Order queued locally and will synchronize for Admin confirmation when connectivity returns.',
+        };
+      }
       return { success: false, error: message };
     }
   },

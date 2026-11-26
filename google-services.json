@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1047569451288",
+    "project_id": "motiba-b9635",
+    "storage_bucket": "motiba-b9635.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047569451288:android:5b91f075ed4414d614b66d",
+        "android_client_info": {
+          "package_name": "com.aarvi.motiba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMOF6z-j-tvRejKiMzDZlEj2PbSL_nmBY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

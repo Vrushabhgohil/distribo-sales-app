@@ -13,6 +13,7 @@ export const Colors = {
   primaryMid: '#B8141F',      // Medium Maroon
   primaryTint: '#FCE8E9',     // Soft Maroon Tint
   primarySoft: '#FFF5F5',     // Softest Maroon
+  primarySubtle: '#FDF1F1',   // Subtle Maroon Tint
 
   // Accent & Highlights
   accent: '#D9A52E',          // Heritage Gold (Accent & Highlights)
@@ -53,6 +54,7 @@ export const Colors = {
   borderLight: '#F3EDE3',     // Light Soft Beige
   borderSubtle: '#F8F4ED',    // Very Subtle Beige
   borderFocus: '#970F18',     // Royal Maroon Active Focus
+  borderMedium: '#D5C8B4',    // Medium Beige Divider
   borderStrong: '#D5C8B4',    // Strong Beige Divider
   borderGold: '#D9A52E',      // Heritage Gold Border
 

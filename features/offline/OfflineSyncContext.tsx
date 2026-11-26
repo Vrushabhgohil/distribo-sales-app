@@ -3,6 +3,10 @@ import NetInfo from '@react-native-community/netinfo';
 import { offlineStorage } from '@/lib/offline-storage';
 import { OfflineQueueItem } from '@/types';
 import { deliveryService } from '@/services/delivery-service';
+import { storeService } from '@/services/store-service';
+import { visitService } from '@/services/visit-service';
+import { orderService } from '@/services/order-service';
+import { followUpService } from '@/services/followup-service';
 import { config } from '@/lib/config';
 
 interface OfflineSyncContextType {
@@ -102,6 +106,35 @@ export const OfflineSyncProvider: React.FC<{ children: React.ReactNode }> = ({ c
             const res = await deliveryService.completeDelivery(payloadWithIdempotency as any);
             success = res.success;
             if (!res.success) errorMessage = res.message;
+          } else if (item.action === 'CREATE_STORE') {
+            const res = await storeService.createStore(item.payload as any);
+            success = res.success;
+            if (!res.success) errorMessage = res.error;
+          } else if (item.action === 'START_VISIT') {
+            const res = await visitService.startVisit(
+              item.payload.storeId,
+              item.payload.salespersonId,
+              item.payload.coords
+            );
+            success = res.success;
+            if (!res.success) errorMessage = res.error;
+          } else if (item.action === 'FINISH_VISIT') {
+            const res = await visitService.finishVisit(
+              item.payload.visitId,
+              item.payload.outcome,
+              item.payload.notes,
+              item.payload.coords
+            );
+            success = res.success;
+            if (!res.success) errorMessage = res.error;
+          } else if (item.action === 'CREATE_ORDER') {
+            const res = await orderService.createOrder(payloadWithIdempotency as any);
+            success = res.success;
+            if (!res.success) errorMessage = res.error;
+          } else if (item.action === 'CREATE_FOLLOWUP') {
+            const res = await followUpService.createFollowUp(item.payload as any);
+            success = res.success;
+            if (!res.success) errorMessage = res.error;
           }
 
           // Check every result

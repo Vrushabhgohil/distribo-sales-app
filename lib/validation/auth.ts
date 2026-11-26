@@ -1,20 +1,22 @@
 import { z } from 'zod';
 
 /**
- * Shared authentication validation schemas.
+ * Shared authentication validation schemas aligned with Admin Panel security standards.
  * Passwords are NOT trimmed to preserve user input and entropy.
- * Minimum password length is enforced at 10 characters.
+ * Password creation/reset enforces at least 8 characters, consistent with Admin Panel policy.
+ * Sign-in validates presence of credentials without imposing registration length constraints
+ * that would block existing accounts.
  */
 export const passwordSchema = z
   .string()
-  .min(10, 'Password must be at least 10 characters long');
+  .min(8, 'Password must be at least 8 characters long');
 
 export const loginSchema = z.object({
   identifier: z
     .string()
     .trim()
     .min(1, 'Please enter your work email or Employee ID.'),
-  password: passwordSchema,
+  password: z.string().min(1, 'Please enter your password.'),
   rememberMe: z.boolean().default(true),
 });
 

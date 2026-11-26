@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   Plus,
@@ -32,10 +32,14 @@ import { Order } from '@/types';
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'All Orders' },
-  { id: 'pending', label: 'Pending Approval' },
-  { id: 'confirmed', label: 'Approved' },
-  { id: 'delivered', label: 'Delivered' },
+  { id: 'pending', label: 'Pending Confirmation' },
+  { id: 'confirmed', label: 'Confirmed' },
   { id: 'rejected', label: 'Rejected' },
+  { id: 'processing', label: 'Processing' },
+  { id: 'ready_for_delivery', label: 'Ready for Delivery' },
+  { id: 'out_for_delivery', label: 'Out for Delivery' },
+  { id: 'partially_delivered', label: 'Partially Delivered' },
+  { id: 'delivered', label: 'Delivered' },
 ];
 
 export default function OrdersScreen() {
@@ -54,6 +58,14 @@ export default function OrdersScreen() {
     queryFn: () => dataService.getOrders(salesperson?.id, selectedStatus),
     enabled: !!salesperson?.id,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (salesperson?.id) {
+        refetch();
+      }
+    }, [salesperson?.id, refetch])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

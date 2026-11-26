@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarClock,
@@ -33,12 +34,13 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { FollowUp, Store } from '@/types';
 
-const TAB_FILTERS = ['Today', 'Upcoming', 'Overdue', 'Completed'];
+const TAB_FILTERS = ['Pending', 'Upcoming', 'Overdue', 'Completed'];
 
 export default function FollowUpsScreen() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { salesperson } = useAuth();
-  const [activeTab, setActiveTab] = useState('Today');
+  const [activeTab, setActiveTab] = useState('Pending');
   const [refreshing, setRefreshing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -86,8 +88,8 @@ export default function FollowUpsScreen() {
 
   const filteredFollowUps = useMemo(() => {
     return followUps.filter((item) => {
-      if (activeTab === 'Today') {
-        return item.follow_up_date === todayStr && item.status !== 'completed';
+      if (activeTab === 'Pending') {
+        return item.status === 'pending' && item.follow_up_date >= todayStr;
       }
       if (activeTab === 'Upcoming') {
         return item.follow_up_date > todayStr && item.status !== 'completed';
@@ -141,7 +143,15 @@ export default function FollowUpsScreen() {
     const isCompleted = item.status === 'completed';
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => {
+          if (item.store_id) {
+            router.push(`/sales/stores/${item.store_id}` as any);
+          }
+        }}
+        style={styles.card}
+      >
         <View style={styles.cardTop}>
           <View style={{ flex: 1, marginRight: 8 }}>
             <Text style={styles.storeName}>{item.store?.name || 'Retail Outlet'}</Text>
@@ -184,7 +194,7 @@ export default function FollowUpsScreen() {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

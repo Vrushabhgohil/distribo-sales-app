@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -21,18 +21,26 @@ import {
   CreditCard,
   ShieldCheck,
   FileText,
+  Download,
+  Share2,
 } from 'lucide-react-native';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { Header } from '@/components/common/Header';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/CustomAlert';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useOrder } from '@/features/hooks/useMotibaQueries';
 import { OrderDetailHeader } from '@/components/orders/OrderDetailHeader';
 import { OrderDetailItemsList } from '@/components/orders/OrderDetailItemsList';
+import { InvoicePreviewModal } from '@/components/orders/InvoicePreviewModal';
+import { invoiceService } from '@/services/invoice-service';
 
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [invoiceVisible, setInvoiceVisible] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [sharingInvoice, setSharingInvoice] = useState(false);
 
   const {
     data: order,
@@ -231,6 +239,61 @@ export default function OrderDetailsScreen() {
           )}
         </View>
 
+        {/* Invoice Card */}
+        <View style={styles.card}>
+          <View style={styles.invoiceHeaderRow}>
+            <View>
+              <Text style={[styles.sectionHeading, { marginBottom: 2 }]}>Order Invoice</Text>
+              <Text style={styles.storeOwner}>
+                Invoice #: {invoiceService.getInvoiceNumber(order)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => setInvoiceVisible(true)}
+              style={styles.viewInvoiceBtn}
+            >
+              <FileText size={14} color={Colors.primary} />
+              <Text style={styles.viewInvoiceText}>View Invoice</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.invoiceActionsRow}>
+            <Button
+              title="Download PDF"
+              variant="outline"
+              size="sm"
+              loading={downloadingPdf}
+              icon={<Download size={14} color={Colors.primary} />}
+              onPress={async () => {
+                setDownloadingPdf(true);
+                const res = await invoiceService.printOrDownloadPdf(order);
+                setDownloadingPdf(false);
+                if (!res.success) {
+                  Alert.alert('PDF Error', res.error || 'Unable to generate PDF invoice.');
+                }
+              }}
+              style={{ flex: 1, marginRight: 8 }}
+            />
+            <Button
+              title="Share Invoice"
+              variant="secondary"
+              size="sm"
+              loading={sharingInvoice}
+              icon={<Share2 size={14} color={Colors.primary} />}
+              onPress={async () => {
+                setSharingInvoice(true);
+                const res = await invoiceService.shareInvoice(order);
+                setSharingInvoice(false);
+                if (!res.success) {
+                  Alert.alert('Share Error', res.error || 'Unable to share invoice.');
+                }
+              }}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+
         {/* Repeat / Reorder Action */}
         <Button
           title="Repeat This Order"
@@ -246,6 +309,12 @@ export default function OrderDetailsScreen() {
           style={styles.reorderBtn}
         />
       </ScrollView>
+
+      <InvoicePreviewModal
+        visible={invoiceVisible}
+        order={order}
+        onClose={() => setInvoiceVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -382,5 +451,29 @@ const styles = StyleSheet.create({
   },
   reorderBtn: {
     marginTop: 8,
+  },
+  invoiceHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  viewInvoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+  },
+  viewInvoiceText: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    fontSize: 12,
+  },
+  invoiceActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

@@ -17,15 +17,20 @@ import {
   Check,
   Eye,
   EyeOff,
+  Info,
   Lock,
   User,
   ShieldCheck,
+  X,
 } from 'lucide-react-native';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/CustomAlert';
+
+const REGISTRATION_RESTRICTED_MESSAGE =
+  'Account registration is restricted. New user accounts can only be created by an authorized administrator through the Admin Panel. Please contact your administrator if you require access.';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,6 +41,7 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [registrationNotice, setRegistrationNotice] = useState<string | null>(null);
 
   const handleLogin = async () => {
     const cleanId = identifier.trim();
@@ -47,11 +53,6 @@ export default function LoginScreen() {
 
     if (!password) {
       setErrorMessage('Please enter your password.');
-      return;
-    }
-
-    if (password.length < 10) {
-      setErrorMessage('Password must be at least 10 characters long.');
       return;
     }
 
@@ -86,6 +87,11 @@ export default function LoginScreen() {
         router.replace('/delivery' as any);
       }
     }
+  };
+
+  const handleSignUpClick = () => {
+    setRegistrationNotice(REGISTRATION_RESTRICTED_MESSAGE);
+    Alert.alert('Registration Restricted', REGISTRATION_RESTRICTED_MESSAGE);
   };
 
   return (
@@ -123,6 +129,26 @@ export default function LoginScreen() {
 
           {/* Form Card */}
           <View style={styles.formCard}>
+            {/* Registration Restricted Informational Banner */}
+            {registrationNotice && (
+              <View style={styles.noticeBanner}>
+                <View style={styles.noticeIconWrap}>
+                  <Info size={18} color={Colors.primary} />
+                </View>
+                <View style={styles.noticeBody}>
+                  <Text style={styles.noticeTitle}>Registration Restricted</Text>
+                  <Text style={styles.noticeText}>{registrationNotice}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setRegistrationNotice(null)}
+                  style={styles.noticeCloseBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <X size={16} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Error Banner */}
             {errorMessage && (
               <View style={styles.errorBanner}>
@@ -216,14 +242,14 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {/* Sign Up Link for Field Sales Reps */}
+          {/* Sign Up / Registration Notice Prompt */}
           <View style={styles.signupPrompt}>
             <Text style={styles.promptText}>New Sales Representative?</Text>
             <TouchableOpacity
-              onPress={() => router.push('/(auth)/signup')}
+              onPress={handleSignUpClick}
               activeOpacity={0.7}
             >
-              <Text style={styles.signupLink}> Register Here</Text>
+              <Text style={styles.signupLink}> Sign Up / Register</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -294,6 +320,38 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     maxWidth: 290,
+  },
+  noticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: Colors.primaryTint,
+    borderColor: Colors.primaryLight,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: Radius.lg,
+    marginBottom: 16,
+  },
+  noticeIconWrap: {
+    marginTop: 2,
+  },
+  noticeBody: {
+    flex: 1,
+  },
+  noticeTitle: {
+    ...Typography.bodySm,
+    fontWeight: '700',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  noticeText: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  noticeCloseBtn: {
+    padding: 2,
   },
   errorBanner: {
     flexDirection: 'row',

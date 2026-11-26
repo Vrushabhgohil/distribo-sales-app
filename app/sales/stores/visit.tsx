@@ -28,12 +28,11 @@ import { dataService } from '@/services/data-service';
 import { StoreVisit } from '@/types';
 
 const VISIT_OUTCOMES = [
-  'Order Booked',
-  'Payment Collected',
-  'Follow-up Scheduled',
-  'Catalogue & Pitch Given',
-  'Store Closed',
-  'No Requirement Today',
+  'Order booked',
+  'Follow-up required',
+  'No order',
+  'Store closed',
+  'Other',
 ];
 
 export default function StoreVisitScreen() {
@@ -44,7 +43,7 @@ export default function StoreVisitScreen() {
 
   const [activeVisit, setActiveVisit] = useState<StoreVisit | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [selectedOutcome, setSelectedOutcome] = useState('Order Booked');
+  const [selectedOutcome, setSelectedOutcome] = useState('Order booked');
   const [visitNotes, setVisitNotes] = useState('');
   const [starting, setStarting] = useState(false);
   const [finishing, setFinishing] = useState(false);

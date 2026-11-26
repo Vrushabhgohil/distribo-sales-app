@@ -1,51 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
-import { Alert } from '@/components/ui/CustomAlert';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import * as Location from 'expo-location';
-import {
-  Store as StoreIcon,
-  User,
-  Phone,
-  MapPin,
-  Compass,
-  CreditCard,
-  Check,
-  ArrowLeft,
-  RefreshCw,
-} from 'lucide-react-native';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { Header } from '@/components/common/Header';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/CustomAlert';
+import { Input } from '@/components/ui/Input';
+import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  CreditCard,
+  MapPin,
+  Phone,
+  Store as StoreIcon,
+  User,
+} from 'lucide-react-native';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as z from 'zod';
 
 const storeSchema = z.object({
   name: z.string().min(2, 'Store name must be at least 2 characters'),
   owner_name: z.string().min(2, 'Owner name is required'),
-  mobile: z.string().min(10, 'Valid 10-digit mobile number required').max(15),
+  mobile: z.string().regex(/^[6-9]\d{9}$/, 'Valid 10-digit mobile number starting with 6-9 required'),
   alternate_mobile: z.string().optional(),
   email: z.string().optional(),
-  address: z.string().min(5, 'Full street address is required'),
+  address: z.string().min(3, 'Full street address is required'),
   area: z.string().min(2, 'Territory/Area is required'),
   city: z.string().min(2, 'City is required'),
-  pincode: z.string().min(6, 'Valid 6-digit pincode is required'),
+  state: z.string().min(2, 'State is required'),
+  pincode: z.string().regex(/^[1-9]\d{5}$/, 'Valid 6-digit PIN code required'),
   store_type: z.string().min(1, 'Store type is required'),
-  credit_limit: z.number().min(0, 'Credit limit must be positive'),
-  payment_terms: z.string(),
+  gst_number: z.string().optional(),
 });
 
 type StoreFormData = z.infer<typeof storeSchema>;
@@ -62,8 +58,6 @@ const STORE_TYPES = [
 export default function AddStoreScreen() {
   const router = useRouter();
   const { salesperson } = useAuth();
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [fetchingGps, setFetchingGps] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -81,45 +75,16 @@ export default function AddStoreScreen() {
       alternate_mobile: '',
       email: '',
       address: '',
-      area: salesperson?.assigned_area || 'Rajkot',
-      city: 'Rajkot',
-      pincode: '360001',
+      area: '',
+      city: '',
+      state: '',
+      pincode: '',
       store_type: 'Kirana / Grocery',
-      credit_limit: 50000,
-      payment_terms: 'Net 30',
+      gst_number: '',
     },
   });
 
   const selectedStoreType = watch('store_type');
-
-  const captureCurrentGps = async () => {
-    setFetchingGps(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Please enable location permissions to capture store GPS.');
-        setFetchingGps(false);
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      setGpsCoords({
-        lat: location.coords.latitude,
-        lng: location.coords.longitude,
-      });
-    } catch (err: any) {
-      Alert.alert('GPS Error', 'Could not obtain device GPS coordinates: ' + err.message);
-    } finally {
-      setFetchingGps(false);
-    }
-  };
-
-  useEffect(() => {
-    captureCurrentGps();
-  }, []);
 
   const onSubmit = async (data: StoreFormData) => {
     setSubmitting(true);
@@ -131,20 +96,33 @@ export default function AddStoreScreen() {
       email: data.email?.trim() || null,
       address: data.address.trim(),
       area: data.area.trim(),
-      city: data.city.trim(),
+      city: `${data.city.trim()}, ${data.state.trim()}`,
       pincode: data.pincode.trim(),
       store_type: data.store_type,
-      credit_limit: data.credit_limit,
-      payment_terms: data.payment_terms,
-      gps_lat: gpsCoords?.lat || null,
-      gps_lng: gpsCoords?.lng || null,
+      gst_number: data.gst_number?.trim() || null,
+      credit_limit: 0,
+      payment_terms: 'Net 30',
+      gps_lat: null,
+      gps_lng: null,
       assigned_salesperson_id: salesperson?.id || null,
       status: 'active',
     });
 
     setSubmitting(false);
 
-    if (result.success) {
+    if (result.success && result.data) {
+      Alert.alert('Store Registered', `${data.name} has been enrolled in your beat route.`, [
+        {
+          text: 'Open Store Details',
+          onPress: () => router.replace(`/sales/stores/${result.data!.id}` as any),
+        },
+        {
+          text: 'View Stores',
+          style: 'cancel',
+          onPress: () => router.replace('/sales/(tabs)/stores'),
+        },
+      ]);
+    } else if (result.success) {
       Alert.alert('Store Registered', `${data.name} has been enrolled in your beat route.`, [
         { text: 'View Beat Stores', onPress: () => router.replace('/sales/(tabs)/stores') },
       ]);
@@ -259,9 +237,9 @@ export default function AddStoreScreen() {
             </View>
           </View>
 
-          {/* Section 2: Address & Territory */}
+          {/* Section 2: Address & Location */}
           <View style={styles.card}>
-            <Text style={styles.sectionHeading}>Location & Territory</Text>
+            <Text style={styles.sectionHeading}>Store Address & Location</Text>
 
             <Controller
               control={control}
@@ -314,77 +292,81 @@ export default function AddStoreScreen() {
               </View>
             </View>
 
-            <Controller
-              control={control}
-              name="pincode"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="PIN Code *"
-                  placeholder="e.g. 380009"
-                  keyboardType="number-pad"
-                  value={value}
-                  onChangeText={onChange}
-                  error={errors.pincode?.message}
+            <View style={styles.twoColRow}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Controller
+                  control={control}
+                  name="state"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="State *"
+                      placeholder="e.g. Gujarat"
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.state?.message}
+                    />
+                  )}
                 />
-              )}
-            />
-
-            {/* Live GPS Capture Box */}
-            <View style={styles.gpsCaptureBox}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.gpsBoxTitle}>GPS Geofence Pin</Text>
-                <Text style={styles.gpsBoxCoord}>
-                  {gpsCoords
-                    ? `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`
-                    : 'Location not pinned yet'}
-                </Text>
               </View>
 
-              <TouchableOpacity
-                onPress={captureCurrentGps}
-                disabled={fetchingGps}
-                style={styles.gpsPinBtn}
-              >
-                <RefreshCw size={14} color={Colors.primary} />
-                <Text style={styles.gpsPinText}>
-                  {fetchingGps ? 'Locating...' : 'Re-capture'}
-                </Text>
-              </TouchableOpacity>
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Controller
+                  control={control}
+                  name="pincode"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="PIN Code *"
+                      placeholder="e.g. 380009"
+                      keyboardType="number-pad"
+                      value={value}
+                      onChangeText={onChange}
+                      error={errors.pincode?.message}
+                    />
+                  )}
+                />
+              </View>
             </View>
           </View>
 
-          {/* Section 3: Credit & Terms */}
+          {/* Section 3: Business Information */}
           <View style={styles.card}>
-            <Text style={styles.sectionHeading}>Credit Limit & Payment</Text>
+            <Text style={styles.sectionHeading}>Business Information</Text>
 
             <Controller
               control={control}
-              name="credit_limit"
+              name="gst_number"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Approved Credit Limit (₹)"
-                  placeholder="50000"
-                  keyboardType="numeric"
-                  value={value ? String(value) : ''}
-                  onChangeText={(val) => onChange(Number(val) || 0)}
-                  error={errors.credit_limit?.message}
-                  leftIcon={<CreditCard size={18} color={Colors.textTertiary} />}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="payment_terms"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Payment Terms"
-                  placeholder="e.g. Net 15 Days, Cash On Delivery"
+                  label="GSTIN (Optional)"
+                  placeholder="e.g. 24ABCDE1234F1Z5"
+                  autoCapitalize="characters"
                   value={value}
                   onChangeText={onChange}
                 />
               )}
             />
+
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Business Email (Optional)"
+                  placeholder="e.g. store@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+
+            <View style={styles.adminNoteBox}>
+              <CreditCard size={16} color={Colors.textSecondary} />
+              <Text style={styles.adminNoteText}>
+                Credit limits and payment terms are configured and approved centrally by Admin.
+              </Text>
+            </View>
           </View>
 
           <Button
@@ -467,6 +449,7 @@ const styles = StyleSheet.create({
   twoColRow: {
     flexDirection: 'row',
   },
+  // GPS Geofence Box
   gpsCaptureBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -501,5 +484,20 @@ const styles = StyleSheet.create({
   submitBtn: {
     marginTop: 4,
     marginBottom: 20,
+  },
+  adminNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.surfaceSecondary,
+    padding: 12,
+    borderRadius: Radius.lg,
+    marginTop: 4,
+  },
+  adminNoteText: {
+    ...Typography.captionSm,
+    color: Colors.textSecondary,
+    flex: 1,
+    lineHeight: 16,
   },
 });

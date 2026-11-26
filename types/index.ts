@@ -297,7 +297,16 @@ export interface CartItem {
 export interface OfflineQueueItem {
   id: string;
   idempotencyKey: string;
-  action: 'CONFIRM_PICKUP' | 'START_DELIVERY' | 'COMPLETE_DELIVERY' | 'RECORD_PARTIAL_DELIVERY';
+  action:
+    | 'CONFIRM_PICKUP'
+    | 'START_DELIVERY'
+    | 'COMPLETE_DELIVERY'
+    | 'RECORD_PARTIAL_DELIVERY'
+    | 'CREATE_STORE'
+    | 'START_VISIT'
+    | 'FINISH_VISIT'
+    | 'CREATE_ORDER'
+    | 'CREATE_FOLLOWUP';
   payload: Record<string, any>;
   timestamp: number;
   status: 'pending' | 'syncing' | 'failed';

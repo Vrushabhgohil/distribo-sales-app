@@ -7,9 +7,13 @@ import { Store } from '@/types';
 
 interface SalesOutletListProps {
   stores: Store[];
+  visitStatusByStoreId?: Map<string, 'on_visit' | 'completed' | 'pending'>;
 }
 
-export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
+export const SalesOutletList: React.FC<SalesOutletListProps> = ({
+  stores,
+  visitStatusByStoreId,
+}) => {
   const router = useRouter();
 
   if (stores.length === 0) return null;
@@ -17,13 +21,22 @@ export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
   return (
     <>
       <View style={[styles.sectionHeaderRow, { marginTop: 8 }]}>
-        <Text style={styles.sectionTitle}>Retail Outlets on Beat</Text>
+        <Text style={styles.sectionTitle}>{"Today's Assigned Stores"}</Text>
         <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/sales/(tabs)/stores')}>
           <Text style={styles.viewAllText}>See all &gt;</Text>
         </TouchableOpacity>
       </View>
 
-      {stores.slice(0, 3).map((store: Store) => (
+      {stores.slice(0, 4).map((store: Store) => {
+        const visitStatus = visitStatusByStoreId?.get(store.id) || 'pending';
+        const statusConfig =
+          visitStatus === 'on_visit'
+            ? { label: 'On Visit', bg: Colors.warningLight, color: Colors.goldDark }
+            : visitStatus === 'completed'
+            ? { label: 'Completed', bg: Colors.secondaryLight, color: Colors.secondary }
+            : { label: 'Pending', bg: Colors.surfaceSecondary, color: Colors.textSecondary };
+
+        return (
         <TouchableOpacity
           key={store.id}
           activeOpacity={0.8}
@@ -40,7 +53,7 @@ export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
                 {store.name}
               </Text>
               <Text style={styles.storeOwner} numberOfLines={1}>
-                {store.owner_name} • {store.store_type || 'Supermarket'}
+                {store.owner_name} • {store.store_type || 'Retail'}
               </Text>
               <View style={styles.storeLocRow}>
                 <MapPin size={12} color={Colors.textTertiary} />
@@ -50,10 +63,10 @@ export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
               </View>
             </View>
 
-            <View style={styles.creditPill}>
-              <Text style={styles.creditPillLabel}>Credit</Text>
-              <Text style={styles.creditPillVal}>
-                ₹{(store.credit_limit || 0).toLocaleString('en-IN')}
+            <View style={[styles.creditPill, { backgroundColor: statusConfig.bg }]}>
+              <Text style={[styles.creditPillLabel, { color: statusConfig.color }]}>Visit</Text>
+              <Text style={[styles.creditPillVal, { color: statusConfig.color }]}>
+                {statusConfig.label}
               </Text>
             </View>
           </View>
@@ -70,7 +83,9 @@ export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
               style={styles.storeCheckInBtn}
             >
               <Navigation size={13} color={Colors.primary} />
-              <Text style={styles.storeCheckInText}>Check In</Text>
+              <Text style={styles.storeCheckInText}>
+                {visitStatus === 'on_visit' ? 'Continue Visit' : 'Start Visit'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -88,7 +103,8 @@ export const SalesOutletList: React.FC<SalesOutletListProps> = ({ stores }) => {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
-      ))}
+      );
+      })}
     </>
   );
 };

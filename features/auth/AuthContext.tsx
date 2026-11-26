@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { offlineStorage } from '@/lib/offline-storage';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
-import { loginSchema, passwordSchema, signUpSchema } from '@/lib/validation/auth';
+import { loginSchema, passwordSchema } from '@/lib/validation/auth';
 import { DeliveryPersonProfile, SalesPersonProfile, UserRole } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -25,11 +25,11 @@ interface AuthContextType {
     password: string,
     rememberMe?: boolean
   ) => Promise<{ success: boolean; role?: UserRole; accountStatus?: AccountStatus; error?: string }>;
-  signUp: (data: {
-    fullName: string;
-    email: string;
-    mobile: string;
-    password: string;
+  signUp: (data?: {
+    fullName?: string;
+    email?: string;
+    mobile?: string;
+    password?: string;
     assignedArea?: string;
   }) => Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }>;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } = await supabase.auth.getSession();
 
         if (session?.user) {
-          const result = await authService.fetchProfileByUserId(session.user.id);
+          const result = await authService.fetchProfile(session.user.id, session.user.email);
           if (result) {
             if (result.profile.status === 'inactive') {
               await signOut();
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (session?.user) {
-        const result = await authService.fetchProfileByUserId(session.user.id);
+        const result = await authService.fetchProfile(session.user.id, session.user.email);
         if (result) {
           if (result.profile.status === 'inactive') {
             await signOut();
@@ -163,16 +163,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.setItem(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
       const resolvedEmail = await authService.resolveLoginIdentifier(validation.data.identifier);
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      let authData: { user: { id: string; email?: string } | null } | null = null;
+      let authError: Error | null = null;
+
+      const firstAttempt = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
         password: validation.data.password,
       });
+
+      authData = firstAttempt.data;
+      authError = firstAttempt.error;
+
+      // If initial sign in fails, check if the user exists in database and needs credential synchronization
+      if (authError || !authData?.user) {
+        const synced = await authService.syncLegacyCredentials(resolvedEmail, validation.data.password);
+        if (synced) {
+          const secondAttempt = await supabase.auth.signInWithPassword({
+            email: resolvedEmail,
+            password: validation.data.password,
+          });
+          authData = secondAttempt.data;
+          authError = secondAttempt.error;
+        }
+      }
 
       if (authError || !authData?.user) {
         return { success: false, error: 'Incorrect email/ID or password. Please verify and try again.' };
       }
 
-      const result = await authService.fetchProfileByUserId(authData.user.id);
+      const result = await authService.fetchProfile(authData.user.id, authData.user.email);
       if (!result) {
         await supabase.auth.signOut();
         return {
@@ -205,96 +224,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async ({
-    fullName,
-    email,
-    mobile,
-    password,
-    assignedArea,
-  }: {
-    fullName: string;
-    email: string;
-    mobile: string;
-    password: string;
-    assignedArea?: string;
-  }): Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }> => {
-    const validation = signUpSchema.safeParse({
-      fullName,
-      email,
-      mobile,
-      password,
-      confirmPassword: password,
-      assignedArea,
-      agreeTerms: true,
-    });
-
-    if (!validation.success) {
-      return { success: false, error: validation.error.issues[0]?.message || 'Invalid signup details.' };
-    }
-
-    const { email: cleanEmail, mobile: cleanMobile, fullName: cleanName, password: rawPassword } = validation.data;
-
-    try {
-      const { data: existingMobile } = await supabase
-        .from('sales_person_profiles')
-        .select('id, name')
-        .eq('mobile', cleanMobile)
-        .maybeSingle();
-
-      if (existingMobile) {
-        return { success: false, error: `Mobile number ${cleanMobile} is already registered (${existingMobile.name}).` };
-      }
-
-      const { data: existingEmail } = await supabase
-        .from('sales_person_profiles')
-        .select('id, name, user_id')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (existingEmail && existingEmail.user_id) {
-        return { success: false, error: `Email address ${cleanEmail} is already registered to ${existingEmail.name}.` };
-      }
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: rawPassword,
-        options: {
-          data: {
-            full_name: cleanName,
-            mobile: cleanMobile,
-            assigned_area: assignedArea || 'Unassigned',
-          },
-        },
-      });
-
-      if (authError) {
-        return { success: false, error: authError.message };
-      }
-
-      if (authData?.user) {
-        const result = await authService.fetchProfileByUserId(authData.user.id);
-        if (result) {
-          setUserRole(result.role);
-          setAccountStatus(result.profile.status);
-          if (result.role === 'sales_person') {
-            setSalesperson(result.profile as SalesPersonProfile);
-            setDeliveryPerson(null);
-          } else {
-            setDeliveryPerson(result.profile as DeliveryPersonProfile);
-            setSalesperson(null);
-          }
-          await authStorage.saveSessionData(result.role, result.profile);
-        } else {
-          setUserRole('sales_person');
-          setAccountStatus('pending');
-        }
-      }
-
-      return { success: true, accountStatus: 'pending' };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred during signup.';
-      return { success: false, error: message };
-    }
+  /**
+   * Public user registration is restricted.
+   * New user accounts can only be created by an authorized administrator through the Admin Panel.
+   */
+  const signUp = async (): Promise<{ success: boolean; accountStatus?: AccountStatus; error?: string }> => {
+    return {
+      success: false,
+      error:
+        'Account registration is restricted. New user accounts can only be created by an authorized administrator through the Admin Panel. Please contact your administrator if you require access.',
+    };
   };
 
   const resetPassword = async (
@@ -327,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const validation = passwordSchema.safeParse(newPassword);
       if (!validation.success) {
-        return { success: false, error: validation.error.issues[0]?.message || 'Password must be at least 10 characters long.' };
+        return { success: false, error: validation.error.issues[0]?.message || 'Password must be at least 8 characters long.' };
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -391,7 +330,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const result = await authService.fetchProfileByUserId(session.user.id);
+      const result = await authService.fetchProfile(session.user.id, session.user.email);
       if (result) {
         if (result.profile.status === 'inactive') {
           await signOut();

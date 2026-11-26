@@ -33,7 +33,7 @@ export default function ProductDetailScreen() {
     enabled: !!id,
   });
 
-  if (isLoading || !product) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <Header
@@ -46,6 +46,31 @@ export default function ProductDetailScreen() {
         />
         <View style={styles.centerContainer}>
           <MotibaLoader size="large" message="Loading product master..." />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!product) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <Header
+          title="Product Details"
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <ArrowLeft size={20} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          }
+        />
+        <View style={styles.centerContainer}>
+          <Package size={48} color={Colors.textTertiary} />
+          <Text style={[styles.productTitle, { marginTop: 12, textAlign: 'center' }]}>
+            Product Unavailable
+          </Text>
+          <Text style={[styles.categorySub, { textAlign: 'center', marginBottom: 16 }]}>
+            Could not load details for this product.
+          </Text>
+          <Button title="Go Back" variant="primary" size="md" fullWidth={false} onPress={() => router.back()} />
         </View>
       </SafeAreaView>
     );

@@ -22,6 +22,7 @@ import {
 import { useState } from 'react';
 import {
   Linking,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -29,6 +30,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function StoreDetailsScreen() {
@@ -74,9 +76,20 @@ export default function StoreDetailsScreen() {
     enabled: !!id,
   });
 
+  const {
+    data: allOrders = [],
+    refetch: refetchOrders,
+  } = useQuery({
+    queryKey: ['orders', salesperson?.id],
+    queryFn: () => dataService.getOrders(salesperson?.id),
+    enabled: !!salesperson?.id,
+  });
+
+  const storeOrders = allOrders.filter((o) => o.store_id === id);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchStore(), refetchVisits(), refetchLedger(), refetchActiveVisit()]);
+    await Promise.all([refetchStore(), refetchVisits(), refetchLedger(), refetchActiveVisit(), refetchOrders()]);
     setRefreshing(false);
   };
 
@@ -87,8 +100,53 @@ export default function StoreDetailsScreen() {
     }
   };
 
+  const openStoreLocation = async () => {
+    if (!store) return;
+
+    const hasCoords =
+      typeof store.gps_lat === 'number' &&
+      typeof store.gps_lng === 'number' &&
+      !Number.isNaN(store.gps_lat) &&
+      !Number.isNaN(store.gps_lng) &&
+      (store.gps_lat !== 0 || store.gps_lng !== 0);
+
+    const addressQuery = [store.address, store.area, store.city, store.pincode]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(', ');
+
+    if (!hasCoords && !addressQuery) {
+      Alert.alert(
+        'Location Unavailable',
+        'No GPS coordinates or address information is available for this store.'
+      );
+      return;
+    }
+
+    const query = hasCoords
+      ? `${store.gps_lat},${store.gps_lng}`
+      : encodeURIComponent(addressQuery);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        const supported = await Linking.canOpenURL(mapsUrl);
+        if (supported) {
+          await Linking.openURL(mapsUrl);
+        } else {
+          Alert.alert('Unable to Open Maps', 'Google Maps could not be opened on this device.');
+        }
+      }
+    } catch {
+      Alert.alert('Unable to Open Maps', 'An error occurred while opening Google Maps.');
+    }
+  };
+
   const currentOutstanding =
     ledger.length > 0 ? ledger[0].running_balance : 0;
+  const availableCredit = Math.max(0, (store?.credit_limit || 0) - currentOutstanding);
 
   if (loadingStore || !store) {
     return (
@@ -119,13 +177,24 @@ export default function StoreDetailsScreen() {
           </TouchableOpacity>
         }
         rightAction={
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={callStore}
-            style={styles.headerPhoneBtn}
-          >
-            <Phone size={18} color={Colors.white} />
-          </TouchableOpacity>
+          <View style={styles.headerActionsRow}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={openStoreLocation}
+              style={styles.headerLocationBtn}
+              accessibilityLabel="Open store location in Google Maps"
+            >
+              <MapPin size={18} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={callStore}
+              style={styles.headerPhoneBtn}
+              accessibilityLabel="Call store"
+            >
+              <Phone size={18} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -276,19 +345,68 @@ export default function StoreDetailsScreen() {
           <View style={styles.creditMetaRow}>
             <View>
               <Text style={styles.metaLabel}>Credit Limit</Text>
-              <Text style={styles.metaValue}>₹{store.credit_limit?.toLocaleString('en-IN')}</Text>
+              <Text style={styles.metaValue}>₹{(store.credit_limit || 0).toLocaleString('en-IN')}</Text>
+            </View>
+            <View>
+              <Text style={styles.metaLabel}>Available Credit</Text>
+              <Text style={[styles.metaValue, { color: Colors.secondary }]}>
+                ₹{availableCredit.toLocaleString('en-IN')}
+              </Text>
             </View>
             <View>
               <Text style={styles.metaLabel}>Payment Terms</Text>
               <Text style={styles.metaValue}>{store.payment_terms || 'Net 30 Days'}</Text>
             </View>
-            <View>
-              <Text style={styles.metaLabel}>Assigned Sales Rep</Text>
-              <Text style={styles.metaValue}>
-                {store.assigned_salesperson?.name || 'Self'}
-              </Text>
-            </View>
           </View>
+        </View>
+
+        {/* Previous Orders & Reorder Section */}
+        <View style={styles.card}>
+          <View style={styles.visitTitleRow}>
+            <Text style={styles.sectionHeading}>Previous Orders & Purchase History</Text>
+            <Text style={styles.visitCount}>{storeOrders.length} orders</Text>
+          </View>
+
+          {storeOrders.length === 0 ? (
+            <Text style={styles.emptyText}>No previous orders recorded for this store.</Text>
+          ) : (
+            storeOrders.slice(0, 5).map((ord) => (
+              <TouchableOpacity
+                key={ord.id}
+                activeOpacity={0.75}
+                onPress={() => router.push(`/sales/orders/${ord.id}` as any)}
+                style={styles.visitItem}
+              >
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={styles.visitDate}>{ord.order_number}</Text>
+                    <StatusBadge status={ord.status} />
+                  </View>
+                  <Text style={styles.visitTimes}>
+                    {new Date(ord.created_at).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}{' '}
+                    • {ord.items?.length || 0} items • ₹{(ord.total_amount || 0).toLocaleString('en-IN')}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/sales/orders/reorder' as any,
+                      params: { orderId: ord.id },
+                    })
+                  }
+                  style={styles.ledgerBtn}
+                >
+                  <Text style={styles.ledgerBtnText}>Reorder</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         {/* Store GPS Geofence Map */}
@@ -383,6 +501,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerLocationBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primaryTint,
   },
   headerPhoneBtn: {
     width: 40,

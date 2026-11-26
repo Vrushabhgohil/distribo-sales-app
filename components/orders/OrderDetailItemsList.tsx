@@ -46,7 +46,10 @@ export const OrderDetailItemsList: React.FC<OrderDetailItemsListProps> = ({
                 SKU: {item.product?.sku || 'N/A'} • Unit: {item.product?.unit || item.product?.pack_size || 'Pack'}
               </Text>
               <Text style={styles.itemQtyPrice}>
-                Qty: {item.quantity} × ₹{item.unit_price}
+                Ordered: {item.quantity} × ₹{item.unit_price}
+                {item.delivered_quantity > 0
+                  ? ` • Delivered: ${item.delivered_quantity} • Remaining: ${Math.max(0, item.quantity - item.delivered_quantity)}`
+                  : ''}
               </Text>
             </View>
 

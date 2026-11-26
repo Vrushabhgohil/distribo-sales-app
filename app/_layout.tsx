@@ -13,11 +13,53 @@ import { useFonts } from 'expo-font';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
 import { CustomAlertProvider } from '@/components/ui/CustomAlert';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { pushNotificationService } from '@/services/push-notification-service';
+import { supabase } from '@/lib/supabase';
 
 function RouteGuard() {
-  const { userRole, accountStatus, loading } = useAuth();
+  const { salesperson, deliveryPerson, userRole, accountStatus, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const profileUserId = salesperson?.user_id || deliveryPerson?.user_id;
+
+  // Register FCM / APNs push token and listen for foreground/tap notifications
+  useEffect(() => {
+    if (!userRole || Platform.OS === 'web') return;
+
+    let mounted = true;
+    const registerToken = async () => {
+      let uid = profileUserId;
+      if (!uid) {
+        const { data } = await supabase.auth.getUser();
+        uid = data.user?.id || null;
+      }
+      if (mounted && uid) {
+        await pushNotificationService.registerForPushNotificationsAsync(uid);
+      }
+    };
+    registerToken();
+
+    const unsubscribe = pushNotificationService.subscribeToNotifications(
+      () => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      },
+      (data) => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        if (data?.reference_type === 'orders' && data?.reference_id) {
+          router.push(`/sales/orders/${data.reference_id}` as any);
+        } else if (data?.reference_type === 'follow_ups' || data?.type === 'follow_up') {
+          router.push('/sales/(tabs)/follow-ups' as any);
+        } else if (userRole === 'sales_person') {
+          router.push('/sales/notifications' as any);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [profileUserId, userRole, router]);
 
   useEffect(() => {
     if (loading) return;

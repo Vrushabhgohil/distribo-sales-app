@@ -88,6 +88,8 @@ export default function NotificationsScreen() {
           }
           if (item.reference_type === 'orders' && item.reference_id) {
             router.push(`/sales/orders/${item.reference_id}` as any);
+          } else if (item.type === 'follow_up' || item.reference_type === 'follow_ups') {
+            router.push('/sales/(tabs)/follow-ups' as any);
           }
         }}
         style={[styles.notifCard, isUnread && styles.notifCardUnread]}

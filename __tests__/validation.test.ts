@@ -1,4 +1,5 @@
 import {
+  passwordSchema,
   loginSchema,
   signUpSchema,
   phoneSchema,
@@ -40,8 +41,23 @@ describe('Validation Schemas', () => {
     });
   });
 
+  describe('passwordSchema', () => {
+    it('validates password with min 8 characters matching Admin Panel policy', () => {
+      expect(passwordSchema.safeParse('AdminPass1').success).toBe(true);
+      expect(passwordSchema.safeParse('12345678').success).toBe(true);
+    });
+
+    it('rejects passwords shorter than 8 characters', () => {
+      const result = passwordSchema.safeParse('short1');
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('at least 8 characters');
+      }
+    });
+  });
+
   describe('loginSchema', () => {
-    it('validates email or employee ID with min 10 char password', () => {
+    it('validates email or employee ID with non-empty password', () => {
       const validEmailLogin = {
         identifier: 'sales@motiba.example.com',
         password: 'Password123!',
@@ -50,21 +66,30 @@ describe('Validation Schemas', () => {
 
       const validEmployeeLogin = {
         identifier: 'EMP00123',
-        password: 'Password123!',
+        password: 'pass123',
       };
       expect(loginSchema.safeParse(validEmployeeLogin).success).toBe(true);
     });
 
-    it('rejects short passwords (< 10 chars)', () => {
-      const shortPw = {
+    it('rejects empty password on sign-in', () => {
+      const emptyPw = {
         identifier: 'EMP00123',
-        password: 'Short1!',
+        password: '',
       };
-      const result = loginSchema.safeParse(shortPw);
+      const result = loginSchema.safeParse(emptyPw);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('at least 10 characters');
+        expect(result.error.issues[0].message).toContain('Please enter your password');
       }
+    });
+
+    it('rejects empty identifier on sign-in', () => {
+      const emptyId = {
+        identifier: '   ',
+        password: 'password123',
+      };
+      const result = loginSchema.safeParse(emptyId);
+      expect(result.success).toBe(false);
     });
   });
 

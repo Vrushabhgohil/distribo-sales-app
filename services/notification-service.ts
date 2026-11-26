@@ -17,7 +17,7 @@ export const notificationService = {
       const { data, error } = await supabase
         .from('notifications')
         .select(NOTIFICATION_COLUMNS)
-        .in('type', ['delivery', 'order', 'system'])
+        .in('type', ['delivery', 'order', 'follow_up', 'system'])
         .order('created_at', { ascending: false })
         .limit(40);
 
@@ -60,7 +60,7 @@ export const notificationService = {
         .from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('is_read', false)
-        .in('type', ['delivery', 'order', 'system']);
+        .in('type', ['delivery', 'order', 'follow_up', 'system']);
 
       if (error) return 0;
       return count || 0;

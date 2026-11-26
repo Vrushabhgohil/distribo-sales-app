@@ -1,55 +1,34 @@
 import { Header } from '@/components/common/Header';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MotibaLoader } from '@/components/common/MotibaLoader';
-import { Input } from '@/components/ui/Input';
 import { Colors, Radius, Shadows, Typography } from '@/constants/theme';
-import { useAuth } from '@/features/auth/AuthContext';
 import { dataService } from '@/services/data-service';
 import { LedgerTransaction } from '@/types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowDownRight,
   ArrowLeft,
   ArrowUpRight,
-  CreditCard,
-  Plus,
-  X
+  Lock,
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
-  Modal,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Alert } from '@/components/ui/CustomAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const PAYMENT_MODES = ['Cash', 'UPI / QR', 'Cheque', 'Bank Transfer'];
 
 export default function CustomerLedgerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { salesperson } = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'debit' | 'credit'>('all');
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-
-  // Form states
-  const [amount, setAmount] = useState('');
-  const [selectedMode, setSelectedMode] = useState('Cash');
-  const [refNumber, setRefNumber] = useState('');
-  const [notes, setNotes] = useState('');
-  const [submittingPayment, setSubmittingPayment] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: store } = useQuery({
     queryKey: ['store', id],
@@ -75,6 +54,8 @@ export default function CustomerLedgerScreen() {
 
   const currentOutstanding =
     transactions.length > 0 ? transactions[0].running_balance : 0;
+  const creditLimit = store?.credit_limit || 0;
+  const availableCredit = Math.max(0, creditLimit - currentOutstanding);
 
   const filteredTransactions = useMemo(() => {
     if (filterType === 'debit') {
@@ -85,43 +66,6 @@ export default function CustomerLedgerScreen() {
     }
     return transactions;
   }, [transactions, filterType]);
-
-  const handleRecordPayment = async () => {
-    const numAmount = parseFloat(amount.trim());
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setFormError('Please enter a valid positive payment collection amount.');
-      return;
-    }
-
-    setSubmittingPayment(true);
-    setFormError(null);
-
-    const result = await dataService.recordPayment({
-      storeId: id!,
-      amount: numAmount,
-      paymentMode: selectedMode,
-      referenceNumber: refNumber.trim() || undefined,
-      notes: notes.trim() || undefined,
-      salespersonId: salesperson?.id,
-    });
-
-    setSubmittingPayment(false);
-
-    if (result.success) {
-      setIsPaymentModalOpen(false);
-      setAmount('');
-      setRefNumber('');
-      setNotes('');
-      queryClient.invalidateQueries({ queryKey: ['store-ledger', id] });
-      queryClient.invalidateQueries({ queryKey: ['stores'] });
-      Alert.alert(
-        'Payment Recorded',
-        `₹${numAmount.toLocaleString('en-IN')} payment collection entry logged in store ledger.`
-      );
-    } else {
-      setFormError(result.error || 'Failed to record payment collection.');
-    }
-  };
 
   const renderTransactionItem = ({ item }: { item: LedgerTransaction }) => {
     const isDebit = item.debit > 0;
@@ -152,6 +96,7 @@ export default function CustomerLedgerScreen() {
                 month: 'short',
                 year: 'numeric',
               })}
+              {item.reference_type ? ` • ${item.reference_type}` : ''}
             </Text>
           </View>
 
@@ -177,45 +122,44 @@ export default function CustomerLedgerScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header
-        title={store?.name || 'Customer Ledger'}
-        subtitle="Accounts & Payment Collections"
+        title={store?.name || 'Store Ledger'}
+        subtitle="Credit & Account Statement (View Only)"
         leftAction={
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
             <ArrowLeft size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
         }
         rightAction={
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setIsPaymentModalOpen(true)}
-            style={styles.addPaymentBtn}
-          >
-            <Plus size={20} color={Colors.white} />
-          </TouchableOpacity>
+          <View style={styles.viewOnlyBadge}>
+            <Lock size={12} color={Colors.textSecondary} />
+            <Text style={styles.viewOnlyText}>View Only</Text>
+          </View>
         }
       />
 
       {/* Outstanding Balance Banner */}
       <View style={styles.heroCard}>
         <View style={styles.heroRow}>
-          <View>
-            <Text style={styles.heroOverline}>CURRENT STORE BALANCE</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.heroOverline}>CURRENT OUTSTANDING</Text>
             <Text style={styles.heroAmount}>
               ₹{currentOutstanding.toLocaleString('en-IN')}
             </Text>
-            <Text style={styles.creditLimitText}>
-              Credit Limit: ₹{store?.credit_limit?.toLocaleString('en-IN') || '0'}
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.heroOverline}>AVAILABLE CREDIT</Text>
+            <Text style={[styles.heroAmount, { fontSize: 20 }]}>
+              ₹{availableCredit.toLocaleString('en-IN')}
             </Text>
           </View>
-
-          <Button
-            title="Collect"
-            variant="secondary"
-            size="sm"
-            fullWidth={false}
-            icon={<Plus size={14} color={Colors.primary} />}
-            onPress={() => setIsPaymentModalOpen(true)}
-          />
+        </View>
+        <View style={styles.heroMetaRow}>
+          <Text style={styles.creditLimitText}>
+            Credit Limit: ₹{creditLimit.toLocaleString('en-IN')}
+          </Text>
+          <Text style={styles.creditLimitText}>
+            Terms: {store?.payment_terms || 'Net 30'}
+          </Text>
         </View>
       </View>
 
@@ -224,7 +168,7 @@ export default function CustomerLedgerScreen() {
         {[
           { id: 'all', label: 'All Entries' },
           { id: 'debit', label: 'Orders (Debit)' },
-          { id: 'credit', label: 'Collections (Credit)' },
+          { id: 'credit', label: 'Payments (Credit)' },
         ].map((f) => (
           <TouchableOpacity
             key={f.id}
@@ -258,88 +202,11 @@ export default function CustomerLedgerScreen() {
           ) : (
             <EmptyState
               title="No Ledger Transactions"
-              description="Orders and payment collections logged for this retail outlet will appear here."
+              description="Orders and Admin-recorded payments for this retail outlet will appear here."
             />
           )
         }
       />
-
-      {/* Record Payment Collection Modal */}
-      <Modal
-        visible={isPaymentModalOpen}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setIsPaymentModalOpen(false)}
-      >
-        <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Record Payment Collection</Text>
-            <TouchableOpacity onPress={() => setIsPaymentModalOpen(false)} style={styles.closeBtn}>
-              <X size={20} color={Colors.textPrimary} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
-            {formError && (
-              <View style={styles.modalError}>
-                <Text style={styles.modalErrorText}>{formError}</Text>
-              </View>
-            )}
-
-            <Input
-              label="Collection Amount (₹) *"
-              placeholder="e.g. 5000"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-              leftIcon={<CreditCard size={18} color={Colors.textTertiary} />}
-            />
-
-            <Text style={styles.inputLabel}>Payment Mode</Text>
-            <View style={styles.modeChipsRow}>
-              {PAYMENT_MODES.map((mode) => {
-                const isSel = selectedMode === mode;
-                return (
-                  <TouchableOpacity
-                    key={mode}
-                    onPress={() => setSelectedMode(mode)}
-                    style={[styles.modeChip, isSel && styles.modeChipActive]}
-                  >
-                    <Text style={[styles.modeChipText, isSel && styles.modeChipTextActive]}>
-                      {mode}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Input
-              label="UPI Ref / Cheque # (Optional)"
-              placeholder="e.g. UPI/123456789 or CHQ#44321"
-              value={refNumber}
-              onChangeText={setRefNumber}
-            />
-
-            <Input
-              label="Receipt Notes (Optional)"
-              placeholder="e.g. Partial collection against invoice #ORD-20261101"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={2}
-            />
-
-            <Button
-              title="Log Payment Collection"
-              variant="primary"
-              size="xl"
-              loading={submittingPayment}
-              onPress={handleRecordPayment}
-              style={{ marginTop: 14, marginBottom: 40 }}
-            />
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -357,14 +224,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPaymentBtn: {
-    backgroundColor: Colors.primary,
-    width: 42,
-    height: 42,
-    borderRadius: Radius.lg,
+  viewOnlyBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.sm,
+    gap: 4,
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+  },
+  viewOnlyText: {
+    ...Typography.captionBold,
+    color: Colors.textSecondary,
+    fontSize: 11,
+  },
+  heroMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
   },
   heroCard: {
     backgroundColor: Colors.primary,
